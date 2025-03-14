@@ -1,4 +1,4 @@
- name: Deploy to Bluehost
+name: Deploy to Bluehost
 on:
   push:
     branches: [ main ]

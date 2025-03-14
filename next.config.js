@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  output: 'export',
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -10,6 +11,7 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    unoptimized: true,
   },
   experimental: {
     optimizeCss: true,

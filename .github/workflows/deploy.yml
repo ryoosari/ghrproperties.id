@@ -16,6 +16,7 @@ jobs:
           server: ftp.avidityid.com
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
           server-dir: /public_html/ghrproperties.id/
           protocol: ftps
           port: 21

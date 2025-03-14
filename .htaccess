@@ -1,16 +1,33 @@
 # Enable URL rewriting
 RewriteEngine On
 
-# Handle Next.js routes
+# Handle Next.js static export routes
 RewriteBase /
-RewriteRule ^index\.html$ - [L]
+
+# Serve static files directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Handle Next.js static HTML files
+RewriteRule ^([^/]+)/$ /$1.html [L]
+
+# Handle root path
+RewriteRule ^$ /index.html [L]
+
+# Handle all other paths - redirect to HTML files
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-l
-RewriteRule . /index.html [L]
+RewriteRule ^(.*)$ /$1.html [L]
 
 # Set Node.js environment to production
 SetEnv NODE_ENV production
+
+# Proper MIME types
+AddType application/javascript .js
+AddType text/css .css
+AddType image/svg+xml .svg
+AddType application/json .json
 
 # Caching for static assets
 <IfModule mod_expires.c>
@@ -33,4 +50,10 @@ SetEnv NODE_ENV production
 # Compress text files
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
-</IfModule> 
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8 

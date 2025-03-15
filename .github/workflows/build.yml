@@ -38,7 +38,7 @@ jobs:
       run: ls -la out/
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: static-build
         path: out/

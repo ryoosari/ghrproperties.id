@@ -1,5 +1,6 @@
 name: Build Next.js Static Export
 
+# Workflow to automatically build and deploy Next.js static export
 on:
   push:
     branches: [ main, master ]

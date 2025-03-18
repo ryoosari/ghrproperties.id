@@ -4,14 +4,17 @@ deployment:
     # Define the deployment path (update this to match your cPanel account)
     - export DEPLOYPATH=/home3/avidityi/public_html/ghrproperties.id
     
-    # Deploy specific directories with all contents
+    # Deploy specific directories with all contents (making sure files go directly to the root)
     - /bin/cp -R out/. $DEPLOYPATH
     - /bin/cp -R public/. $DEPLOYPATH/public
     
     # Deploy specific files
     - /bin/cp .htaccess $DEPLOYPATH
     - /bin/cp index.php $DEPLOYPATH
+    - /bin/cp test.php $DEPLOYPATH
+    - /bin/cp test.html $DEPLOYPATH
     
     # Set file permissions
+    - /bin/chmod 644 $DEPLOYPATH/.htaccess
     - /bin/find $DEPLOYPATH -type d -exec /bin/chmod 755 {} \;
     - /bin/find $DEPLOYPATH -type f -exec /bin/chmod 644 {} \; 

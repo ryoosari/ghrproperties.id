@@ -1,23 +1,14 @@
 ---
 deployment:
   tasks:
-    # Define the deployment paths
+    # Define the deployment path
     - export DEPLOYPATH=/home3/avidityi/public_html/ghrproperties.id
-    - export OUTPATH=/home3/avidityi/public_html/ghrproperties.id/out
     
-    # Create the /out directory if it doesn't exist
-    - /bin/mkdir -p $OUTPATH
-    
-    # Deploy specific directories with all contents (making sure files go directly to the root)
+    # Deploy the contents of /out directory directly to the document root
     - /bin/cp -R out/. $DEPLOYPATH
-    - /bin/cp -R public/. $DEPLOYPATH/public
     
-    # Copy redirect file to the /out directory
-    - /bin/cp out/index.php $OUTPATH/
-    
-    # Deploy specific files
+    # Make sure .htaccess is copied
     - /bin/cp .htaccess $DEPLOYPATH
-    - /bin/cp index.php $DEPLOYPATH
     
     # Set file permissions
     - /bin/chmod 644 $DEPLOYPATH/.htaccess

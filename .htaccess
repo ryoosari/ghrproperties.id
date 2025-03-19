@@ -1,13 +1,1 @@
-# Minimal htaccess file
-Options +FollowSymLinks
-RewriteEngine On
-RewriteBase /
 
-# Serve static files directly
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
-
-# Route everything else to index.html
-RewriteRule ^ index.html [L]
-
-# DOCUMENT_ROOT: /home3/avidityi/public_html/ghrproperties.id

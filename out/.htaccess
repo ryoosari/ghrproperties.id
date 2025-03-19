@@ -1,24 +1,12 @@
-# Enable URL rewriting
+# Basic .htaccess for /out directory
 RewriteEngine On
+RewriteBase /out/
 
-# Handle Next.js static export routes
-RewriteBase /
+# Redirect everything in /out to the root directory
+RewriteRule ^(.*)$ /$1 [R=301,L]
 
-# Serve static files directly
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Handle Next.js static HTML files
-RewriteRule ^([^/]+)/$ /$1.html [L]
-
-# Handle root path
-RewriteRule ^$ /index.html [L]
-
-# Handle all other paths - redirect to HTML files
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ /$1.html [L]
+# Prevent directory listing
+Options -Indexes
 
 # Set Node.js environment to production
 SetEnv NODE_ENV production
@@ -51,9 +39,6 @@ AddType application/json .json
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
 </IfModule>
-
-# Prevent directory listing
-Options -Indexes
 
 # Set default character set
 AddDefaultCharset UTF-8

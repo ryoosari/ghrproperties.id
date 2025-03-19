@@ -1,7 +1,31 @@
-# Simple .htaccess for /out directory
-Options +FollowSymLinks
+# Basic .htaccess for Next.js static export
+Options +FollowSymLinks -Indexes
 RewriteEngine On
-RewriteBase /out/
+RewriteBase /
 
-# Redirect everything in /out to the root directory
-RewriteRule ^(.*)$ /$1 [R=301,L]
+# Serve existing files directly
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Serve existing directories directly
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Handle Next.js static HTML files
+RewriteRule ^([^/]+)/$ /$1.html [L]
+
+# Handle root path
+RewriteRule ^$ /index.html [L]
+
+# Handle all other paths - redirect to HTML files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /$1.html [L]
+
+# Basic MIME types for Next.js
+AddType application/javascript .js
+AddType text/css .css
+AddType image/svg+xml .svg
+
+# Server information
+# DOCUMENT_ROOT: /home3/avidityi/public_html/ghrproperties.id

@@ -49,7 +49,7 @@ If you've set up the GitHub Actions workflow (.github/workflows/build.yml):
 
 ### Directory Structure
 
-Your test.php shows that files are in a subdirectory:
+The site files are deployed to a subdirectory on Bluehost:
 ```
 DOCUMENT_ROOT: /home3/avidityi/public_html/ghrproperties.id
 ```
@@ -68,9 +68,7 @@ To fix this, you have two options:
 After deployment:
 
 1. Visit your website to check if it loads correctly
-2. Check the diagnostic files:
-   - http://ghrproperties.id/test.html
-   - http://ghrproperties.id/test.php
+2. Check the browser console for any JavaScript errors
 3. Verify that index.html exists in the correct directory
 
 ## Troubleshooting

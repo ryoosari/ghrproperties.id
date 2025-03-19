@@ -68,10 +68,7 @@ Before uploading to Bluehost, verify your static export:
 
 1. Visit your domain (http://ghrproperties.id)
 2. Check for any visible errors
-3. Test the diagnostic files:
-   - http://ghrproperties.id/test.html
-   - http://ghrproperties.id/test.php
-4. Check browser console for JavaScript errors
+3. Check browser console for JavaScript errors
 
 ## Step 5: Troubleshooting Common Issues
 
@@ -79,7 +76,7 @@ Before uploading to Bluehost, verify your static export:
 
 1. Check Bluehost error logs in cPanel
 2. Verify .htaccess file is properly uploaded and has correct permissions
-3. Check if mod_rewrite is enabled in Apache (test.php will show this)
+3. Check if mod_rewrite is enabled in Apache
 4. Try temporarily renaming .htaccess to disable it and see if site loads
 
 ### 404 Errors for Routes
@@ -115,13 +112,4 @@ If you continue to have issues with Git deployment, try this simplified approach
 1. Build your Next.js app locally: `npm run build`
 2. Zip the contents of the `out` directory (not the directory itself)
 3. Upload and extract the zip file to your `public_html` directory
-4. Upload the `.htaccess` file separately to ensure it's not overwritten
-
-## Testing Tools
-
-Two test files have been created to help diagnose issues:
-
-1. `test.html` - A simple HTML file to verify static file serving
-2. `test.php` - A PHP script that displays server configuration and file status
-
-Visit these files on your domain to help troubleshoot any issues. 
+4. Upload the `.htaccess` file separately to ensure it's not overwritten 

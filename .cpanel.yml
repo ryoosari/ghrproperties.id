@@ -18,10 +18,6 @@ deployment:
     # Deploy specific files
     - /bin/cp .htaccess $DEPLOYPATH
     - /bin/cp index.php $DEPLOYPATH
-    - /bin/cp test.php $DEPLOYPATH
-    - /bin/cp test.html $DEPLOYPATH
-    - /bin/cp docroot-check.php $DEPLOYPATH
-    - /bin/cp docroot-check.php $OUTPATH
     
     # Set file permissions
     - /bin/chmod 644 $DEPLOYPATH/.htaccess

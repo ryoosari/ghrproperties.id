@@ -28,6 +28,10 @@ echo "📋 Saving build output to temporary location..."
 TMP_DIR=$(mktemp -d)
 cp -R out/. "$TMP_DIR"/
 
+# Stash any changes to ensure clean working directory
+echo "🧹 Cleaning working directory..."
+git stash push -m "Stashed before updating production branch"
+
 # Switch to production branch
 echo "🔄 Switching to production branch..."
 git checkout production
@@ -58,6 +62,12 @@ fi
 # Switch back to original branch
 echo "🔙 Switching back to $CURRENT_BRANCH branch..."
 git checkout $CURRENT_BRANCH
+
+# Restore stashed changes if any
+if git stash list | grep -q "Stashed before updating production branch"; then
+  echo "🔄 Restoring stashed changes..."
+  git stash pop
+fi
 
 echo "✨ Done! The production branch has been updated with the latest build."
 echo "   You can now pull this branch in cPanel using Git Version Control." 

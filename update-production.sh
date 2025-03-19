@@ -23,13 +23,20 @@ fi
 CURRENT_BRANCH=$(git branch --show-current)
 echo "🔍 Current branch: $CURRENT_BRANCH"
 
+# Create a temporary directory to store the build output
+echo "📋 Saving build output to temporary location..."
+TMP_DIR=$(mktemp -d)
+cp -R out/. "$TMP_DIR"/
+
 # Switch to production branch
 echo "🔄 Switching to production branch..."
 git checkout production
 
-# Copy new built files
-echo "📋 Copying built files from $CURRENT_BRANCH branch..."
-rsync -av --delete out/ out/
+# Clean the out directory and copy the new files
+echo "📋 Replacing built files in production branch..."
+rm -rf out/*
+cp -R "$TMP_DIR"/. out/
+rm -rf "$TMP_DIR"
 
 # Stage all changes
 echo "➕ Staging changes to production branch..."

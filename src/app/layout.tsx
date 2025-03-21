@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import '@/styles/globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import CacheRefresher from '@/components/CacheRefresher';
+import { NoHydration } from '@/components/NoHydration';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,6 +45,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* Use NoHydration for maximum protection against hydration errors */}
+          <NoHydration>
+            <CacheRefresher />
+          </NoHydration>
           {children}
         </ThemeProvider>
       </body>

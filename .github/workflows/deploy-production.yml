@@ -55,6 +55,10 @@ jobs:
         git config --global user.name 'GitHub Actions Bot'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         
+        # Handle uncommitted changes that would prevent checkout
+        git add .
+        git reset --hard HEAD
+        
         # Fetch all branches
         git fetch origin
         

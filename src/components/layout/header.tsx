@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FaBars, FaTimes, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
 import { cn } from '@/utils/cn';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -91,30 +91,6 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* Contact Info */}
-        <div className="hidden lg:flex items-center space-x-4">
-          <a 
-            href="tel:+1234567890" 
-            className={cn(
-              "flex items-center text-sm transition-colors",
-              isScrolled ? "text-gray-700 dark:text-gray-200" : "text-white/90"
-            )}
-          >
-            <FaPhone className="mr-2" />
-            <span>+1 (234) 567-890</span>
-          </a>
-          <a 
-            href="mailto:info@ghrproperties.id" 
-            className={cn(
-              "flex items-center text-sm transition-colors",
-              isScrolled ? "text-gray-700 dark:text-gray-200" : "text-white/90"
-            )}
-          >
-            <FaEnvelope className="mr-2" />
-            <span>info@ghrproperties.id</span>
-          </a>
-        </div>
-
         {/* Mobile menu button */}
         <button
           type="button"
@@ -185,18 +161,8 @@ export default function Header() {
               {item.name}
             </Link>
           ))}
-          <div className="pt-4 flex justify-between items-center px-4">
+          <div className="pt-4 flex justify-center items-center px-4">
             <ThemeToggle />
-            <div className="flex flex-col space-y-2">
-              <a href="tel:+1234567890" className="flex items-center text-sm text-gray-300">
-                <FaPhone className="mr-2" />
-                <span>+1 (234) 567-890</span>
-              </a>
-              <a href="mailto:info@ghrproperties.id" className="flex items-center text-sm text-gray-300">
-                <FaEnvelope className="mr-2" />
-                <span>info@ghrproperties.id</span>
-              </a>
-            </div>
           </div>
         </nav>
       </div>

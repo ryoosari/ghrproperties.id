@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaMapMarkerAlt } from 'react-icons/fa';
 import Image from 'next/image';
 
 const navigation = {
@@ -134,25 +134,18 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-primary tracking-wider uppercase">Contact</h3>
+                <h3 className="text-sm font-semibold text-primary tracking-wider uppercase">Location</h3>
                 <ul role="list" className="mt-4 space-y-4">
-                  <li>
-                    <a href="tel:+1234567890" className="text-base text-gray-300 hover:text-white flex items-center">
-                      <FaPhone className="h-5 w-5 mr-2 text-gray-400" />
-                      +1 (234) 567-890
-                    </a>
-                  </li>
-                  <li>
-                    <a href="mailto:info@ghrproperties.id" className="text-base text-gray-300 hover:text-white flex items-center">
-                      <FaEnvelope className="h-5 w-5 mr-2 text-gray-400" />
-                      info@ghrproperties.id
-                    </a>
-                  </li>
                   <li>
                     <div className="text-base text-gray-300 flex items-start">
                       <FaMapMarkerAlt className="h-5 w-5 mr-2 text-gray-400 mt-1" />
                       <span>123 Property Street<br />Real Estate City, 12345<br />Country</span>
                     </div>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="text-base text-primary hover:text-primary-light">
+                      Visit our Contact page
+                    </Link>
                   </li>
                 </ul>
               </div>

@@ -52,7 +52,7 @@ if git diff --staged --quiet; then
 else
   # Commit changes
   echo "💾 Committing changes to production branch..."
-  git commit -m "Update built files from $CURRENT_BRANCH branch"
+  git commit -m "Update production with static files from $CURRENT_BRANCH branch"
 
   # Push to remote
   echo "🚀 Pushing production branch to remote..."

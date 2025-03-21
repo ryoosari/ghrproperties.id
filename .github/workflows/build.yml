@@ -1,4 +1,4 @@
-name: [DISABLED] Build Next.js Static Export
+name: "[DISABLED] Build Next.js Static Export"
 
 # This workflow is now DISABLED in favor of deploy-production.yml
 # Left here for reference 

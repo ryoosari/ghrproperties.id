@@ -42,7 +42,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          forcedTheme="light"
           disableTransitionOnChange
         >
           {/* Use NoHydration for maximum protection against hydration errors */}

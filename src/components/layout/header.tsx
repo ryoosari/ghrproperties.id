@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { cn } from '@/utils/cn';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -86,9 +85,6 @@ export default function Header() {
               {item.name}
             </Link>
           ))}
-          <div className="pl-4">
-            <ThemeToggle />
-          </div>
         </nav>
 
         {/* Mobile menu button */}
@@ -161,9 +157,6 @@ export default function Header() {
               {item.name}
             </Link>
           ))}
-          <div className="pt-4 flex justify-center items-center px-4">
-            <ThemeToggle />
-          </div>
         </nav>
       </div>
     </header>

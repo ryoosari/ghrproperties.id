@@ -9,7 +9,7 @@ if (count(get_included_files()) == 1) {
 // Simple connection test script
 
 // Include the configuration
-require_once $_SERVER['DOCUMENT_ROOT'] . '/home3/avidityi/private/db-config.php';
+require_once 'config.php';
 
 // Set content type to HTML 
 header("Content-Type: text/html; charset=UTF-8");

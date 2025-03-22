@@ -6,7 +6,7 @@ if (count(get_included_files()) == 1) {
 }
 
 // Database connection information
-// IMPORTANT: Replace these values in cPanel with your actual credentials
+// Local development uses placeholders, GitHub Actions will inject real values
 $db_host = 'localhost';
 $db_user = 'DB_USER_PLACEHOLDER';
 $db_password = 'DB_PASSWORD_PLACEHOLDER';

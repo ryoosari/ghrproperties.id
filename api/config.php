@@ -8,9 +8,9 @@ if (count(get_included_files()) == 1) {
 // Database connection information
 // IMPORTANT: Replace these values in cPanel with your actual credentials
 $db_host = 'localhost';
-$db_user = 'avidityi_ryoosari';
-$db_password = 'Ockerse24!';
-$db_name = 'avidityi_ghrproperties.id';
+$db_user = 'DB_USER_PLACEHOLDER';
+$db_password = 'DB_PASSWORD_PLACEHOLDER';
+$db_name = 'DB_NAME_PLACEHOLDER';
 
 // Enable CORS for API requests
 header("Access-Control-Allow-Origin: *");

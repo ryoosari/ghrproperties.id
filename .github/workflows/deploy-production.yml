@@ -46,7 +46,7 @@ jobs:
     - name: Prepare API files for deployment
       run: |
         # Create a template config.php file with placeholder values
-        cat > api/config.php << 'EOF'
+        cat > api/config.php << 'EOFCONFIG'
         <?php
         // Prevent direct access to this file
         if (count(get_included_files()) == 1) {
@@ -105,11 +105,11 @@ jobs:
             exit();
         }
         ?>
-        EOF
+        EOFCONFIG
         
         # Create .htaccess for API directory if it doesn't exist
         if [ ! -f "api/.htaccess" ]; then
-          cat > api/.htaccess << 'EOF'
+          cat > api/.htaccess << 'EOFHTACCESS'
           # Protect PHP files from direct access except these endpoints
           <FilesMatch "^(properties|db-test|connection-test)\.php$">
               Allow from all
@@ -127,11 +127,11 @@ jobs:
               Header set X-XSS-Protection "1; mode=block"
               Header set X-Frame-Options "SAMEORIGIN"
           </IfModule>
-          EOF
+          EOFHTACCESS
         fi
         
         # Create a README.md file with instructions for manual configuration
-        cat > api/README.md << 'EOF'
+        cat > api/README.md << 'EOFREADME'
         # API Configuration Instructions
 
         After deployment, you need to manually update your database credentials in `config.php`.
@@ -148,7 +148,7 @@ jobs:
 
         For additional security, consider adding a directory above the web root containing
         credentials and modifying the config.php to include that file instead.
-        EOF
+        EOFREADME
         
         # Copy API files to out directory for deployment
         mkdir -p out/api

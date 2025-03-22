@@ -1,16 +1,22 @@
-# API Configuration Instructions
+# API Configuration
 
-After deployment, you need to manually update your database credentials in `config.php`.
+## Database Credentials
 
-1. Log in to cPanel
-2. Navigate to File Manager
-3. Go to `/public_html/ghrproperties.id/api/`
-4. Edit `config.php`
-5. Replace the placeholder values with your actual database credentials:
-   - DB_USER_PLACEHOLDER
-   - DB_PASSWORD_PLACEHOLDER
-   - DB_NAME_PLACEHOLDER
-6. Save the file
+The database credentials are automatically injected from GitHub Secrets during deployment.
+You do not need to manually edit the config.php file.
 
-For additional security, consider adding a directory above the web root containing
-credentials and modifying the config.php to include that file instead.
+If you need to update the database credentials:
+
+1. Go to your GitHub repository
+2. Click on Settings → Secrets and variables → Actions
+3. Update the following secrets:
+   - DB_HOST (database hostname)
+   - DB_USER (database username)
+   - DB_PASSWORD (database password)
+   - DB_NAME (database name)
+4. Re-run the deployment workflow
+
+## Security
+
+Your database credentials are securely stored as encrypted GitHub Secrets and are only
+injected during the deployment process. They are not visible in the repository code.

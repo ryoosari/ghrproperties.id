@@ -46,7 +46,7 @@ jobs:
     - name: Prepare API files for deployment
       run: |
         # Create a template config.php file with placeholder values
-        cat > api/config.php << 'EOFCONFIG'
+        cat > api/config.php << 'EOF'
         <?php
         // Prevent direct access to this file
         if (count(get_included_files()) == 1) {
@@ -105,50 +105,50 @@ jobs:
             exit();
         }
         ?>
-        EOFCONFIG
+EOF
         
         # Create .htaccess for API directory if it doesn't exist
         if [ ! -f "api/.htaccess" ]; then
-          cat > api/.htaccess << 'EOFHTACCESS'
-          # Protect PHP files from direct access except these endpoints
-          <FilesMatch "^(properties|db-test|connection-test)\.php$">
-              Allow from all
-          </FilesMatch>
-          
-          # Deny direct access to config.php
-          <Files "config.php">
-              Order deny,allow
-              Deny from all
-          </Files>
-          
-          # Security headers
-          <IfModule mod_headers.c>
-              Header set X-Content-Type-Options "nosniff"
-              Header set X-XSS-Protection "1; mode=block"
-              Header set X-Frame-Options "SAMEORIGIN"
-          </IfModule>
-          EOFHTACCESS
+          cat > api/.htaccess << 'EOF'
+# Protect PHP files from direct access except these endpoints
+<FilesMatch "^(properties|db-test|connection-test)\.php$">
+    Allow from all
+</FilesMatch>
+
+# Deny direct access to config.php
+<Files "config.php">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+EOF
         fi
         
         # Create a README.md file with instructions for manual configuration
-        cat > api/README.md << 'EOFREADME'
-        # API Configuration Instructions
+        cat > api/README.md << 'EOF'
+# API Configuration Instructions
 
-        After deployment, you need to manually update your database credentials in `config.php`.
+After deployment, you need to manually update your database credentials in `config.php`.
 
-        1. Log in to cPanel
-        2. Navigate to File Manager
-        3. Go to `/public_html/ghrproperties.id/api/`
-        4. Edit `config.php`
-        5. Replace the placeholder values with your actual database credentials:
-           - DB_USER_PLACEHOLDER
-           - DB_PASSWORD_PLACEHOLDER
-           - DB_NAME_PLACEHOLDER
-        6. Save the file
+1. Log in to cPanel
+2. Navigate to File Manager
+3. Go to `/public_html/ghrproperties.id/api/`
+4. Edit `config.php`
+5. Replace the placeholder values with your actual database credentials:
+   - DB_USER_PLACEHOLDER
+   - DB_PASSWORD_PLACEHOLDER
+   - DB_NAME_PLACEHOLDER
+6. Save the file
 
-        For additional security, consider adding a directory above the web root containing
-        credentials and modifying the config.php to include that file instead.
-        EOFREADME
+For additional security, consider adding a directory above the web root containing
+credentials and modifying the config.php to include that file instead.
+EOF
         
         # Copy API files to out directory for deployment
         mkdir -p out/api

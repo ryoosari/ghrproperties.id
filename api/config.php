@@ -1,27 +1,13 @@
 <?php
-// Alternative config file using PDO connection for better security
+// Use mysqli connection approach 
+// No SSH access required for this approach
 
-// Check if we're on Bluehost production or local development
-if (file_exists('/home/avidityi/db-credentials.php')) {
-    // We're on Bluehost production
-    require_once '/home/avidityi/db-credentials.php';
-} else {
-    // We're in local development
-    // Use default local dev settings
-    $db_host = 'localhost';
-    $db_user = 'root';
-    $db_password = '';
-    $db_name = 'ghrproperties_local';
-}
-
-// Database connection configuration
-$db_config = [
-    'host' => $db_host ?? 'localhost',
-    'username' => $db_user ?? '',
-    'password' => $db_password ?? '',
-    'database' => $db_name ?? '',
-    'charset' => 'utf8mb4'
-];
+// Database connection information
+// NOTE: For production, replace these with your actual Bluehost credentials
+$db_host = 'localhost';
+$db_user = 'avidityi_ryoosari';  // Your Bluehost database username
+$db_password = 'Ockerse24!';     // Your Bluehost database password
+$db_name = 'avidityi_ghrproperties.id'; // Your Bluehost database name
 
 // Enable CORS for API requests
 header("Access-Control-Allow-Origin: *");
@@ -35,42 +21,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Create PDO database connection
+// Create database connection
 function get_db_connection() {
-    global $db_config;
+    global $db_host, $db_user, $db_password, $db_name;
     
-    try {
-        $dsn = "mysql:host={$db_config['host']};dbname={$db_config['database']};charset={$db_config['charset']}";
-        
-        // Configure PDO options for better security and performance
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,     // Throw exceptions on errors
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Fetch as associative array
-            PDO::ATTR_EMULATE_PREPARES => false,             // Use real prepared statements
-            PDO::ATTR_PERSISTENT => true                     // Use persistent connections
-        ];
-        
-        // Create new PDO instance
-        $pdo = new PDO($dsn, $db_config['username'], $db_config['password'], $options);
-        
-        return $pdo;
-    } catch (PDOException $e) {
+    $conn = new mysqli($db_host, $db_user, $db_password, $db_name);
+    
+    // Check connection
+    if ($conn->connect_error) {
         http_response_code(500);
-        die(json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]));
+        die(json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]));
     }
-}
-
-// Execute query and return results
-function execute_query($sql, $params = []) {
-    try {
-        $pdo = get_db_connection();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
-    } catch (PDOException $e) {
-        http_response_code(500);
-        die(json_encode(['error' => 'Query execution failed: ' . $e->getMessage()]));
-    }
+    
+    // Set character set
+    $conn->set_charset("utf8mb4");
+    
+    return $conn;
 }
 
 // Helper function to send JSON response

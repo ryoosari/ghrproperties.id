@@ -27,23 +27,18 @@ export interface PropertySearchResults {
   };
 }
 
-// API utility functions
+// Helper function to determine if we're in a static environment
+const isStaticEnvironment = () => {
+  // Check for static export indicators
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' || 
+    process.env.NEXT_PHASE === 'phase-export' || 
+    process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true' ||
+    typeof window !== 'undefined' && window.location.protocol === 'file:'
+  );
+};
 
-interface Property {
-  property_id: number;
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  square_footage: number;
-  property_type: string;
-  featured_image: string;
-  status: 'active' | 'pending' | 'sold';
-  created_at: string;
-  updated_at: string;
-}
+// API utility functions
 
 interface PropertiesResponse {
   properties: Property[];
@@ -64,6 +59,12 @@ interface PropertyResponse extends Property {
  * Fetch a single property by ID
  */
 export async function fetchProperty(id: number): Promise<Property> {
+  // In static environments, API calls will fail, so we'll throw an error early
+  if (isStaticEnvironment()) {
+    console.warn('API calls are not available in static environments. Use mockProperties instead.');
+    throw new Error('Property not found');
+  }
+  
   try {
     const response = await fetch(`${API_BASE_URL}/properties.php?id=${id}`);
     
@@ -83,6 +84,12 @@ export async function fetchProperty(id: number): Promise<Property> {
  * Search for properties with filters
  */
 export async function searchProperties(params: PropertySearchParams = {}): Promise<PropertySearchResults> {
+  // In static environments, API calls will fail, so we'll throw an error early
+  if (isStaticEnvironment()) {
+    console.warn('API calls are not available in static environments. Use mockProperties instead.');
+    throw new Error('Failed to search properties in static environment');
+  }
+  
   try {
     // Build query string from parameters
     const queryParams = new URLSearchParams();

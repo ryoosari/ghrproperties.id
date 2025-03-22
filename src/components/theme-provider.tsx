@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+// Simple theme provider that doesn't depend on next-themes
 export function ThemeProvider({
   children,
   ...props
@@ -10,5 +10,7 @@ export function ThemeProvider({
   children: React.ReactNode;
   [key: string]: any;
 }) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  // We're just passing the children without any theme logic
+  // since we're only using light theme based on the forcedTheme setting
+  return <>{children}</>;
 } 

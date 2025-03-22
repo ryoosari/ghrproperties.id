@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import { Property } from './types';
 
 // Database connection configuration
 const dbConfig = {
@@ -33,24 +34,6 @@ export async function getConnection() {
     console.error('Error getting database connection:', error);
     throw error;
   }
-}
-
-// Property types
-export interface Property {
-  property_id: number;
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  square_footage: number;
-  property_type: string;
-  featured_image: string;
-  keywords: string;
-  status: 'active' | 'pending' | 'sold';
-  created_at: string;
-  updated_at: string;
 }
 
 // Function to get all properties

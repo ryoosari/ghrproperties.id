@@ -16,6 +16,87 @@ export const metadata: Metadata = {
   keywords: ['properties', 'real estate', 'houses', 'apartments', 'listings'],
 };
 
+// Mock property data for static generation
+const mockProperties = [
+  {
+    id: 1,
+    title: 'Luxury Villa in Seminyak',
+    location: 'Seminyak, Bali',
+    price: 'Rp5.000.000.000',
+    bedrooms: 4,
+    bathrooms: 5,
+    area: '450 sq ft',
+    image: '/images/property-1.jpg',
+    type: 'Villa',
+  },
+  {
+    id: 2,
+    title: 'Modern Apartment in Jakarta',
+    location: 'Jakarta Selatan',
+    price: 'Rp2.500.000.000',
+    bedrooms: 2,
+    bathrooms: 2,
+    area: '120 sq ft',
+    image: '/images/property-2.jpg',
+    type: 'Apartment',
+  },
+  {
+    id: 3,
+    title: 'Spacious Family Home',
+    location: 'Bandung, West Java',
+    price: 'Rp3.500.000.000',
+    bedrooms: 4,
+    bathrooms: 3,
+    area: '350 sq ft',
+    image: '/images/property-3.jpg',
+    type: 'House',
+  },
+  {
+    id: 4,
+    title: 'Beachfront Villa',
+    location: 'Uluwatu, Bali',
+    price: 'Rp7.500.000.000',
+    bedrooms: 5,
+    bathrooms: 6,
+    area: '600 sq ft',
+    image: '/images/property-1.jpg',
+    type: 'Villa',
+  },
+  {
+    id: 5,
+    title: 'City Center Apartment',
+    location: 'Central Jakarta',
+    price: 'Rp1.800.000.000',
+    bedrooms: 1,
+    bathrooms: 1,
+    area: '85 sq ft',
+    image: '/images/property-2.jpg',
+    type: 'Apartment',
+  },
+  {
+    id: 6,
+    title: 'Mountain View Estate',
+    location: 'Puncak, Bogor',
+    price: 'Rp4.200.000.000',
+    bedrooms: 3,
+    bathrooms: 3,
+    area: '300 sq ft',
+    image: '/images/property-3.jpg',
+    type: 'House',
+  },
+];
+
+// Helper function to determine if we're in a static environment
+const isStaticEnvironment = () => {
+  // Check for static export indicators
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' || 
+    process.env.NEXT_PHASE === 'phase-export' || 
+    process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true' ||
+    typeof window !== 'undefined' && window.location.protocol === 'file:'
+  );
+};
+
 // Loading component for properties
 function PropertyListingsSkeleton() {
   return (
@@ -42,30 +123,54 @@ function PropertyListingsSkeleton() {
 
 // Main Properties component
 async function PropertyListings() {
-  // Fetch properties from the API
-  const data = await fetchAllProperties(1, 12);
-  const properties = data.properties.map(mapPropertyToUIFormat);
+  // Check if we're in a static environment
+  if (isStaticEnvironment()) {
+    console.log('Using mock properties in static environment');
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {mockProperties.map((property) => (
+          <PropertyCard key={property.id} property={property} />
+        ))}
+      </div>
+    );
+  }
 
-  return (
-    <>
-      {properties.length === 0 ? (
-        <div className="text-center py-16">
-          <FaHome className="mx-auto text-6xl text-gray-300 mb-4" />
-          <h3 className="text-2xl font-semibold mb-2">No Properties Found</h3>
-          <p className="text-gray-500 mb-6">We couldn't find any properties matching your criteria.</p>
-          <Link href="/properties" className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors">
-            Clear Filters
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {properties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
-      )}
-    </>
-  );
+  try {
+    // Fetch properties from the API
+    const data = await fetchAllProperties(1, 12);
+    const properties = data.properties.map(mapPropertyToUIFormat);
+
+    return (
+      <>
+        {properties.length === 0 ? (
+          <div className="text-center py-16">
+            <FaHome className="mx-auto text-6xl text-gray-300 mb-4" />
+            <h3 className="text-2xl font-semibold mb-2">No Properties Found</h3>
+            <p className="text-gray-500 mb-6">We couldn't find any properties matching your criteria.</p>
+            <Link href="/properties" className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors">
+              Clear Filters
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {properties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+    // Fallback to mock data if API fails
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {mockProperties.map((property) => (
+          <PropertyCard key={property.id} property={property} />
+        ))}
+      </div>
+    );
+  }
 }
 
 export default function PropertiesPage() {

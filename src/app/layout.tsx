@@ -39,12 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           {/* Use NoHydration for maximum protection against hydration errors */}
           <NoHydration>
             <CacheRefresher />

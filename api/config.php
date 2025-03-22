@@ -1,13 +1,16 @@
 <?php
-// Use mysqli connection approach 
-// No SSH access required for this approach
+// Prevent direct access to this file
+if (count(get_included_files()) == 1) {
+    // This file was accessed directly
+    exit('Access denied');
+}
 
 // Database connection information
-// NOTE: For production, replace these with your actual Bluehost credentials
+// IMPORTANT: Replace these values in cPanel with your actual credentials
 $db_host = 'localhost';
-$db_user = 'avidityi_ryoosari';  // Your Bluehost database username
-$db_password = 'Ockerse24!';     // Your Bluehost database password
-$db_name = 'avidityi_ghrproperties.id'; // Your Bluehost database name
+$db_user = 'avidityi_ryoosari';
+$db_password = 'Ockerse24!';
+$db_name = 'avidityi_ghrproperties.id';
 
 // Enable CORS for API requests
 header("Access-Control-Allow-Origin: *");
@@ -30,7 +33,7 @@ function get_db_connection() {
     // Check connection
     if ($conn->connect_error) {
         http_response_code(500);
-        die(json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]));
+        die(json_encode(['error' => 'Database connection failed']));
     }
     
     // Set character set

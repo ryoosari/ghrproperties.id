@@ -1,0 +1,14 @@
+<?php
+// Prevent direct access to this file
+if (count(get_included_files()) == 1) {
+    // This file was accessed directly
+    exit('Access denied');
+}
+
+// Database connection information
+// These will be replaced with GitHub secrets in the deployment workflow
+$db_host = 'localhost';
+$db_user = 'DB_USER_PLACEHOLDER';
+$db_password = 'DB_PASSWORD_PLACEHOLDER';
+$db_name = 'DB_NAME_PLACEHOLDER';
+?> 

@@ -36,4 +36,31 @@ Options -Indexes
 # Force PHP handler
 <IfModule mod_mime.c>
     AddHandler application/x-httpd-php .php
+</IfModule>
+
+# Protect PHP files from direct access except these endpoints
+<FilesMatch "^(properties|db-test|connection-test)\.php$">
+    Allow from all
+</FilesMatch>
+
+# Deny direct access to config.php
+<Files "config.php">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# PHP settings
+<IfModule mod_php7.c>
+    php_flag display_errors off
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 120
+    php_value max_input_time 120
 </IfModule> 

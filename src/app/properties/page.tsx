@@ -1,179 +1,21 @@
-import { Suspense } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Metadata } from 'next';
+import { FaHome, FaFilter, FaSearch } from 'react-icons/fa';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import PropertyCard from '@/components/property-card';
-import { fetchAllProperties, mapPropertyToUIFormat } from '@/utils/api';
-import { FaHome, FaFilter, FaSpinner } from 'react-icons/fa';
-import { Property } from '@/utils/types';
+import { getAllProperties } from '@/utils/snapshot';
 
-// Generate metadata for the page
-export const metadata: Metadata = {
-  title: 'Properties | GHR Properties',
-  description: 'Browse our extensive collection of premium properties available for sale and rent.',
-  keywords: ['properties', 'real estate', 'houses', 'apartments', 'listings'],
-};
-
-// Mock property data for static generation
-const mockProperties = [
-  {
-    id: 1,
-    title: 'Luxury Villa in Seminyak',
-    location: 'Seminyak, Bali',
-    price: 'Rp5.000.000.000',
-    bedrooms: 4,
-    bathrooms: 5,
-    area: '450 sq ft',
-    image: '/images/property-1.jpg',
-    type: 'Villa',
-  },
-  {
-    id: 2,
-    title: 'Modern Apartment in Jakarta',
-    location: 'Jakarta Selatan',
-    price: 'Rp2.500.000.000',
-    bedrooms: 2,
-    bathrooms: 2,
-    area: '120 sq ft',
-    image: '/images/property-2.jpg',
-    type: 'Apartment',
-  },
-  {
-    id: 3,
-    title: 'Spacious Family Home',
-    location: 'Bandung, West Java',
-    price: 'Rp3.500.000.000',
-    bedrooms: 4,
-    bathrooms: 3,
-    area: '350 sq ft',
-    image: '/images/property-3.jpg',
-    type: 'House',
-  },
-  {
-    id: 4,
-    title: 'Beachfront Villa',
-    location: 'Uluwatu, Bali',
-    price: 'Rp7.500.000.000',
-    bedrooms: 5,
-    bathrooms: 6,
-    area: '600 sq ft',
-    image: '/images/property-1.jpg',
-    type: 'Villa',
-  },
-  {
-    id: 5,
-    title: 'City Center Apartment',
-    location: 'Central Jakarta',
-    price: 'Rp1.800.000.000',
-    bedrooms: 1,
-    bathrooms: 1,
-    area: '85 sq ft',
-    image: '/images/property-2.jpg',
-    type: 'Apartment',
-  },
-  {
-    id: 6,
-    title: 'Mountain View Estate',
-    location: 'Puncak, Bogor',
-    price: 'Rp4.200.000.000',
-    bedrooms: 3,
-    bathrooms: 3,
-    area: '300 sq ft',
-    image: '/images/property-3.jpg',
-    type: 'House',
-  },
-];
-
-// Helper function to determine if we're in a static environment
-const isStaticEnvironment = () => {
-  // Check for static export indicators
-  return (
-    process.env.NEXT_PHASE === 'phase-production-build' || 
-    process.env.NEXT_PHASE === 'phase-export' || 
-    process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true' ||
-    typeof window !== 'undefined' && window.location.protocol === 'file:'
-  );
-};
-
-// Loading component for properties
-function PropertyListingsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="bg-white rounded-lg overflow-hidden shadow-md animate-pulse">
-          <div className="h-64 bg-gray-200"></div>
-          <div className="p-6">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="h-5 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="flex justify-between mt-4 pt-4 border-t">
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Main Properties component
-async function PropertyListings() {
-  // Check if we're in a static environment
-  if (isStaticEnvironment()) {
-    console.log('Using mock properties in static environment');
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {mockProperties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
-    );
-  }
-
-  try {
-    // Fetch properties from the API
-    const data = await fetchAllProperties(1, 12);
-    const properties = data.properties.map(mapPropertyToUIFormat);
-
-    return (
-      <>
-        {properties.length === 0 ? (
-          <div className="text-center py-16">
-            <FaHome className="mx-auto text-6xl text-gray-300 mb-4" />
-            <h3 className="text-2xl font-semibold mb-2">No Properties Found</h3>
-            <p className="text-gray-500 mb-6">We couldn't find any properties matching your criteria.</p>
-            <Link href="/properties" className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors">
-              Clear Filters
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-        )}
-      </>
-    );
-  } catch (error) {
-    console.error('Error fetching properties:', error);
-    // Fallback to mock data if API fails
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {mockProperties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
-    );
-  }
-}
+// This is a static page that will be pre-rendered at build time
+export const dynamic = 'force-static';
 
 export default function PropertiesPage() {
+  // Get properties directly from snapshot
+  const properties = getAllProperties({
+    status: 'published',
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
+
   return (
     <main className="flex min-h-screen flex-col">
       <Header />
@@ -228,30 +70,104 @@ export default function PropertiesPage() {
           </div>
           
           {/* Property Listings */}
-          <Suspense fallback={<PropertyListingsSkeleton />}>
-            <PropertyListings />
-          </Suspense>
+          {properties.length === 0 ? (
+            <div className="text-center py-16">
+              <FaHome className="mx-auto text-6xl text-gray-300 mb-4" />
+              <h3 className="text-2xl font-semibold mb-2">No Properties Found</h3>
+              <p className="text-gray-500 mb-6">We couldn't find any properties matching your criteria.</p>
+              <Link 
+                href="/properties" 
+                className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark transition-colors"
+              >
+                Clear Filters
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {properties.map((property) => (
+                <div 
+                  key={property.id} 
+                  className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <div className="relative pb-[60%]">
+                    {property.attributes.featured_image?.data?.attributes?.url ? (
+                      <img 
+                        src={property.attributes.featured_image.data.attributes.url} 
+                        alt={property.attributes.title} 
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400">No image</span>
+                      </div>
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        {property.attributes.property_type || 'Property'}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-0 left-0 bg-primary text-white px-3 py-1">
+                      {property.attributes.status === 'published' ? 'For Sale' : property.attributes.status}
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h2 className="text-xl font-semibold mb-2 truncate">
+                      {property.attributes.title}
+                    </h2>
+                    
+                    <p className="text-gray-600 mb-2 truncate">
+                      {property.attributes.location}
+                    </p>
+                    
+                    <div className="text-lg font-bold text-primary mb-3">
+                      {typeof property.attributes.price === 'number' 
+                        ? `$${property.attributes.price.toLocaleString()}` 
+                        : property.attributes.price}
+                    </div>
+                    
+                    <div className="flex justify-between text-sm text-gray-600 border-t pt-3">
+                      <span>{property.attributes.bedrooms} Beds</span>
+                      <span>{property.attributes.bathrooms} Baths</span>
+                      <span>{property.attributes.square_footage} sq ft</span>
+                    </div>
+                  </div>
+                  
+                  <div className="px-4 pb-4">
+                    <Link 
+                      href={`/properties/${property.attributes.slug}`}
+                      className="block w-full text-center bg-primary hover:bg-primary-dark text-white py-2 rounded transition-colors"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           
           {/* Pagination (static for now) */}
-          <div className="mt-12 flex justify-center">
-            <div className="inline-flex rounded-md shadow-sm">
-              <button className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium rounded-l-md text-gray-700 hover:bg-gray-50">
-                Previous
-              </button>
-              <button className="px-4 py-2 border-t border-b border-gray-300 bg-primary text-white text-sm font-medium">
-                1
-              </button>
-              <button className="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                2
-              </button>
-              <button className="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                3
-              </button>
-              <button className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium rounded-r-md text-gray-700 hover:bg-gray-50">
-                Next
-              </button>
+          {properties.length > 0 && (
+            <div className="mt-12 flex justify-center">
+              <div className="inline-flex rounded-md shadow-sm">
+                <button className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium rounded-l-md text-gray-700 hover:bg-gray-50">
+                  Previous
+                </button>
+                <button className="px-4 py-2 border-t border-b border-gray-300 bg-primary text-white text-sm font-medium">
+                  1
+                </button>
+                <button className="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  2
+                </button>
+                <button className="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  3
+                </button>
+                <button className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium rounded-r-md text-gray-700 hover:bg-gray-50">
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
       
@@ -265,7 +181,10 @@ export default function PropertiesPage() {
             Our property portfolio is constantly updated. Contact us to discuss your requirements
             and we'll help you find your perfect property.
           </p>
-          <Link href="/contact" className="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          <Link 
+            href="/contact" 
+            className="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
             Contact Us
           </Link>
         </div>

@@ -6,8 +6,17 @@
 # Exit on any error
 set -e
 
-echo "📦 Building Next.js application..."
-npm run build
+# Export content snapshot (optional, usually already in the repo)
+echo "📊 Verifying content snapshot data..."
+if [ ! -d "data" ] || [ ! -f "data/property-index.json" ]; then
+  echo "⚠️ Warning: No snapshot data found. Running export-data script..."
+  npm run export-data
+else
+  echo "✅ Content snapshot data found."
+fi
+
+echo "📦 Building Next.js application with snapshot data..."
+NEXT_PUBLIC_STATIC_EXPORT=true npm run build
 
 if [ ! -d "out" ]; then
   echo "❌ Error: 'out' directory not found. Build may have failed."
@@ -49,26 +58,44 @@ if git show-ref --verify --quiet refs/heads/production; then
 else
   # Create an orphan branch (no history from main)
   git checkout --orphan production
-  # Remove all files from staging
-  git rm -rf --cached .
+  
+  # Clean everything
+  echo "🧹 Creating clean production branch..."
+  git rm -rf . || true
 fi
 
-# Clean the working directory (remove all files)
-echo "🧹 Cleaning production branch..."
-# Keep only .git directory
-find . -mindepth 1 -maxdepth 1 -not -name ".git" -exec rm -rf {} \;
-
-# Copy the new files from temporary directory to root
+# Copy the build output directly to the root of the production branch
 echo "📋 Copying built files to production branch root..."
 cp -R "$TMP_DIR"/. ./
 rm -rf "$TMP_DIR"
 
-# Get .cpanel.yml from main branch
-echo "📄 Adding .cpanel.yml from main branch..."
-git checkout main -- .cpanel.yml
+# Copy any other essential files
+if [ -f "${CURRENT_BRANCH}/.htaccess" ]; then
+  echo "📄 Copying .htaccess to production..."
+  cp "${CURRENT_BRANCH}/.htaccess" ./
+fi
 
-# Add all files to git
-echo "➕ Staging all files in production branch..."
+# Create a README for the production branch
+echo "📄 Creating README for production branch..."
+cat > README.md << 'EOL'
+# GHR Properties Website - Production Branch
+
+This branch contains the production-ready, statically generated website files for GHR Properties.
+
+## Important Notes
+
+- This branch is automatically generated from the `main` branch
+- Do not make direct changes to this branch
+- All changes should be made in the `main` branch
+
+The site is built using Next.js with the content snapshot approach, which means:
+- All property data is pre-rendered at build time
+- No database dependencies in production
+- Maximum performance and reliability
+EOL
+
+# Stage all changes
+echo "➕ Staging changes to production branch..."
 git add -A
 
 # Check if there are changes to commit
@@ -77,16 +104,16 @@ if git diff --staged --quiet; then
 else
   # Commit changes
   echo "💾 Committing changes to production branch..."
-  git commit -m "Update production with static files from $CURRENT_BRANCH branch"
+  git commit -m "Update static production build [skip ci]"
 
   # Push to remote
   echo "🚀 Pushing production branch to remote..."
-  git push -u origin production
+  git push origin production
 fi
 
 # Switch back to original branch
 echo "🔙 Switching back to $CURRENT_BRANCH branch..."
-git checkout $CURRENT_BRANCH
+git checkout "$CURRENT_BRANCH"
 
 # Restore stashed changes if any
 if git stash list | grep -q "Stashed before updating production branch"; then
@@ -94,5 +121,5 @@ if git stash list | grep -q "Stashed before updating production branch"; then
   git stash pop
 fi
 
-echo "✨ Done! The production branch has been updated with only the static files at the root level."
-echo "   You can now pull this branch in cPanel using Git Version Control." 
+echo "✨ Done! The production branch has been updated with the latest static build."
+echo "   You can now deploy this branch to your hosting provider." 

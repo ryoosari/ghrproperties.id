@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Next.js Deployment Script for Bluehost
+# Next.js Deployment Script for Bluehost with content snapshot
 echo "Starting Next.js deployment to Bluehost..."
 
+# Export content snapshot from Strapi
+echo "Exporting content snapshot from Strapi..."
+npm run export-data
+
 # Build the Next.js application
-echo "Building Next.js application..."
-npm run build
+echo "Building static site using snapshot data..."
+NEXT_PUBLIC_STATIC_EXPORT=true npm run build
 
 if [ ! -d "out" ]; then
   echo "Error: 'out' directory not found. Build may have failed."

@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Build and commit script for Next.js static export
+# Build and commit script for Next.js static export with content snapshot
 echo "Building Next.js application for deployment..."
 
-# Build the Next.js application
-npm run build
+# Export content snapshot from Strapi
+echo "Exporting content snapshot from Strapi..."
+npm run export-data
+
+# Build the Next.js application with static export enabled
+echo "Building static site using snapshot data..."
+NEXT_PUBLIC_STATIC_EXPORT=true npm run build
 
 if [ ! -d "out" ]; then
   echo "Error: 'out' directory not found. Build may have failed."
@@ -19,6 +24,7 @@ cp .htaccess out/
 echo "Adding build files to git..."
 git add -f out/
 git add .htaccess
+git add data/
 
 echo ""
 echo "Build complete and files staged for commit."

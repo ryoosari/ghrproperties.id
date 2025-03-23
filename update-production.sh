@@ -5,8 +5,21 @@
 # Exit on any error
 set -e
 
-echo "📦 Building Next.js application..."
-npm run build
+# Export content snapshot (optional, usually already in the repo)
+echo "📊 Verifying content snapshot data..."
+if [ ! -d "data" ] || [ ! -f "data/property-index.json" ]; then
+  echo "⚠️ Warning: No snapshot data found. Running export-data script..."
+  npm run export-data
+  
+  # Stage the exported data
+  git add data/
+  git commit -m "Update content snapshot data" || echo "No changes to snapshot data"
+else
+  echo "✅ Content snapshot data found."
+fi
+
+echo "📦 Building Next.js application with snapshot data..."
+NEXT_PUBLIC_STATIC_EXPORT=true npm run build
 
 if [ ! -d "out" ]; then
   echo "❌ Error: 'out' directory not found. Build may have failed."
@@ -52,22 +65,21 @@ if git diff --staged --quiet; then
 else
   # Commit changes
   echo "💾 Committing changes to production branch..."
-  git commit -m "Update production with static files from $CURRENT_BRANCH branch"
+  git commit -m "Update production build [skip ci]"
 
-  # Push to remote
-  echo "🚀 Pushing production branch to remote..."
+  # Push changes
+  echo "🚀 Pushing production branch..."
   git push origin production
 fi
 
-# Switch back to original branch
-echo "🔙 Switching back to $CURRENT_BRANCH branch..."
-git checkout $CURRENT_BRANCH
+# Switch back to the original branch
+echo "🔄 Switching back to $CURRENT_BRANCH branch..."
+git checkout "$CURRENT_BRANCH"
 
-# Restore stashed changes if any
+# Restore changes from stash if necessary
 if git stash list | grep -q "Stashed before updating production branch"; then
   echo "🔄 Restoring stashed changes..."
   git stash pop
 fi
 
-echo "✨ Done! The production branch has been updated with the latest build."
-echo "   You can now pull this branch in cPanel using Git Version Control." 
+echo "✅ Production branch updated successfully!" 

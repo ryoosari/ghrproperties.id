@@ -29,9 +29,19 @@ jobs:
         
     - name: Install dependencies
       run: npm ci
+
+    # Use pre-exported snapshot data for production build
+    # NOTE: The content snapshot data should be committed to the repository
+    - name: Verify snapshot data exists
+      run: |
+        if [ -d "data" ] && [ -f "data/property-index.json" ]; then
+          echo "✅ Snapshot data found. Using existing snapshots for build."
+        else
+          echo "⚠️ Warning: No snapshot data found. Will use mock data for build."
+        fi
       
-    - name: Build Next.js static export
-      run: npm run build
+    - name: Build Next.js static export with snapshot data
+      run: NEXT_PUBLIC_STATIC_EXPORT=true npm run build
       
     - name: Copy .htaccess to build output
       run: |

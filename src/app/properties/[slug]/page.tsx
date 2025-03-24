@@ -119,17 +119,59 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
     
     console.log(`Generated ${uniqueProperties.length} static paths for properties: ${logMessage}`);
     
+    // For static export: If no properties were found, return a placeholder to prevent build errors
+    if (uniqueProperties.length === 0 && process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+      console.log('No properties found but NEXT_PUBLIC_STATIC_EXPORT is true - adding placeholder path');
+      return [{ slug: 'placeholder-property' }];
+    }
+    
     // Make sure we always return an array, even if empty
     return uniqueProperties;
   } catch (error) {
     console.error('Error in generateStaticParams:', error);
-    // Return empty array to avoid build failures
+    
+    // For static export: Return a placeholder to prevent build errors
+    if (process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+      console.log('Error occurred but NEXT_PUBLIC_STATIC_EXPORT is true - adding placeholder path');
+      return [{ slug: 'placeholder-property' }];
+    }
+    
+    // Return empty array to avoid build failures in development mode
     return [];
   }
 }
 
 export default async function PropertyDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
+  
+  // Handle placeholder case for static export
+  if (slug === 'placeholder-property' && process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+    // Return a placeholder property page for static export
+    return (
+      <main className="flex min-h-screen flex-col">
+        <Header />
+        
+        <section className="pt-32 pb-12 flex-grow">
+          <div className="container">
+            <div className="p-6 bg-white rounded-lg shadow-md text-center">
+              <h1 className="text-3xl font-bold mb-4">No Properties Available</h1>
+              <p className="text-gray-600 mb-6">
+                There are currently no properties listed in the system. Please check back later or contact us for more information.
+              </p>
+              <Link 
+                href="/contact" 
+                className="inline-block bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                Contact Us
+              </Link>
+            </div>
+          </div>
+        </section>
+        
+        <Footer />
+      </main>
+    );
+  }
   
   // First, try to fetch from Strapi at build time
   const strapiProperty = await getStrapiPropertyBySlug(slug);

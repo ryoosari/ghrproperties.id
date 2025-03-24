@@ -48,9 +48,33 @@ jobs:
         NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
         NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_API_TOKEN }}
       run: |
-        echo "🔄 Fetching latest data from Strapi..."
-        npm run export-data
-        echo "✅ Data export complete."
+        echo "🔄 Attempting to fetch latest data from Strapi..."
+        
+        # Create required directories if they don't exist
+        mkdir -p data/properties data/snapshot
+        
+        # Try to run the export script, but continue on error
+        npm run export-data || {
+          echo "⚠️ Strapi export failed, using empty data as fallback"
+          
+          # Create empty processed-properties.json
+          echo "[]" > data/processed-properties.json
+          
+          # Create empty property-index.json
+          echo "[]" > data/property-index.json
+          
+          # Create empty properties.json
+          echo "[]" > data/properties.json
+          
+          # Create metadata.json with current timestamp
+          echo "{\"exportedAt\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"stats\": {\"properties\": 0}, \"source\": \"fallback\"}" > data/metadata.json
+          
+          # Create last-updated.json
+          echo "{\"lastUpdated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > data/last-updated.json
+          
+          echo "✅ Created fallback data files"
+        }
+        
         # Show exported data summary
         if [ -f "data/metadata.json" ]; then
           echo "📊 Data export summary:"

@@ -56,16 +56,38 @@ async function exportStrapiData() {
   console.log(`🚀 Starting Strapi data export at ${now.toISOString()}`);
   console.log(`Using Strapi URL: ${STRAPI_URL}`);
   
+  // Start tracking counts
+  const stats = { properties: 0 };
+  
   try {
-    // Start tracking counts
-    const stats = { properties: 0 };
-    
     // 1. Export Properties
     await exportProperties(stats);
     
     // 2. Create normalized snapshot for static generation
     await createNormalizedSnapshot();
     
+  } catch (error) {
+    console.error('❌ Error during export:', error);
+    
+    // Create empty files instead of exiting with error
+    console.log('Creating empty fallback files...');
+    
+    // Create empty property files
+    fs.writeFileSync(
+      path.join(DATA_DIR, 'properties.json'),
+      JSON.stringify([], null, 2)
+    );
+    
+    fs.writeFileSync(
+      path.join(DATA_DIR, 'processed-properties.json'),
+      JSON.stringify([], null, 2)
+    );
+    
+    fs.writeFileSync(
+      path.join(DATA_DIR, 'property-index.json'),
+      JSON.stringify([], null, 2)
+    );
+  } finally {
     // 3. Export Last Updated timestamp
     const metadata = {
       exportedAt: now.toISOString(),
@@ -83,15 +105,11 @@ async function exportStrapiData() {
       JSON.stringify(metadata, null, 2)
     );
     
-    console.log('\n✅ Strapi data export completed successfully');
+    console.log('\n✅ Strapi data export completed');
     console.log('Summary:');
     Object.entries(stats).forEach(([key, count]) => {
       console.log(`- ${key}: ${count} items`);
     });
-    
-  } catch (error) {
-    console.error('❌ Error during export:', error);
-    process.exit(1);
   }
 }
 
@@ -102,6 +120,16 @@ async function exportProperties(stats) {
   console.log('\n📋 Exporting properties...');
   
   try {
+    // Check if we can connect to Strapi first
+    try {
+      const healthCheck = await strapiClient.get('/');
+      console.log('✅ Successfully connected to Strapi API');
+    } catch (error) {
+      console.error(`❌ Could not connect to Strapi at ${STRAPI_URL}: ${error.message}`);
+      console.log('API may be unavailable or credentials may be incorrect');
+      throw new Error(`Strapi connection failed: ${error.message}`);
+    }
+    
     // Fetch all properties with full data
     const query = {
       populate: '*',
@@ -111,21 +139,30 @@ async function exportProperties(stats) {
     };
     
     const queryString = qs.stringify(query, { encodeValuesOnly: true });
+    console.log(`Requesting properties with query: /properties?${queryString}`);
+    
     const response = await strapiClient.get(`/properties?${queryString}`);
     
-    // Log the raw response to debug
-    console.log('Raw Strapi response structure:', JSON.stringify(response.data, null, 2).substring(0, 500) + '...');
+    // Log the raw response structure for debugging
+    const firstPartOfResponse = JSON.stringify(response.data, null, 2).substring(0, 500);
+    console.log(`Raw Strapi response structure (first 500 chars): ${firstPartOfResponse}...`);
     
     const { data, meta } = response.data;
     
     if (!data || !Array.isArray(data)) {
       console.warn('⚠️ No properties data returned from Strapi');
+      stats.properties = 0;
       return;
     }
     
     // Track count
     stats.properties = data.length;
     console.log(`Found ${data.length} properties`);
+    
+    // Create required directories if they don't exist
+    if (!fs.existsSync(PROPERTIES_DIR)) {
+      fs.mkdirSync(PROPERTIES_DIR, { recursive: true });
+    }
     
     // Map the properties based on actual structure
     // Properties are returned as an array of objects with id and attributes

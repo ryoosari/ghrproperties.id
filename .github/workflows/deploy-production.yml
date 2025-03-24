@@ -74,6 +74,10 @@ jobs:
           echo "[] " > data/processed-properties.json
         fi
         
+        # Make sure permissions are correct
+        chmod +x scripts/fix-permissions.sh
+        ./scripts/fix-permissions.sh
+        
         npm run build
         
         echo "✅ Build completed"
@@ -83,8 +87,28 @@ jobs:
         if [ -f ".htaccess" ]; then
           cp .htaccess out/
           echo "Copied .htaccess to out directory"
+          # Verify the file was actually copied
+          if [ -f "out/.htaccess" ]; then
+            echo "✅ Verified .htaccess exists in output directory"
+            head -5 out/.htaccess
+          else
+            echo "⚠️ Failed to copy .htaccess to out directory"
+            echo "Creating minimal .htaccess in out directory"
+            echo "RewriteEngine On" > out/.htaccess
+            echo "RewriteBase /" >> out/.htaccess
+            echo "RewriteRule ^properties(/.*)?$ properties\$1.html [L]" >> out/.htaccess
+            echo "RewriteCond %{REQUEST_FILENAME} !-f" >> out/.htaccess
+            echo "RewriteCond %{REQUEST_FILENAME} !-d" >> out/.htaccess
+            echo "RewriteRule . /index.html [L]" >> out/.htaccess
+          fi
         else
-          echo "No .htaccess file found"
+          echo "No .htaccess file found in root, creating one in out directory"
+          echo "RewriteEngine On" > out/.htaccess
+          echo "RewriteBase /" >> out/.htaccess
+          echo "RewriteRule ^properties(/.*)?$ properties\$1.html [L]" >> out/.htaccess
+          echo "RewriteCond %{REQUEST_FILENAME} !-f" >> out/.htaccess
+          echo "RewriteCond %{REQUEST_FILENAME} !-d" >> out/.htaccess
+          echo "RewriteRule . /index.html [L]" >> out/.htaccess
         fi
     
     # Prepare API files for deployment

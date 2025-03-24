@@ -1,0 +1,18 @@
+{
+  "id": 3,
+  "attributes": {
+    "title": "Untitled Property",
+    "slug": "property-3",
+    "description": "",
+    "status": "published",
+    "price": 0,
+    "property_type": "Property",
+    "location": "Unknown location",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "area": 0,
+    "amenities": [],
+    "featured_image": null,
+    "images": []
+  }
+}

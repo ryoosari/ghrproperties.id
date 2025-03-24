@@ -10,8 +10,12 @@
     "lint": "next lint",
     "export-data": "node scripts/export-strapi-data.mjs",
     "snapshot-build": "npm run export-data && NEXT_PUBLIC_STATIC_EXPORT=true next build",
+    "static-export": "npm run export-data && sh scripts/static-export.sh",
+    "hybrid-build": "npm run export-data && next build",
     "test-strapi": "node scripts/test-strapi-connection.mjs",
-    "test-dynamic": "node scripts/test-dynamic-mode.mjs"
+    "test-dynamic": "node scripts/test-dynamic-mode.mjs",
+    "test-property": "node scripts/test-property-display.mjs",
+    "debug-strapi": "node scripts/debug-strapi-property.mjs"
   },
   "repository": {
     "type": "git",
@@ -32,6 +36,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.18",
     "@types/node": "^20.11.30",
+    "@types/qs": "^6.9.18",
     "@types/react": "^18.2.67",
     "@types/react-dom": "^18.2.22",
     "autoprefixer": "^10.4.19",
@@ -48,6 +53,7 @@
     "next": "^14.1.4",
     "next-themes": "^0.4.6",
     "postcss": "^8.4.38",
+    "qs": "^6.14.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",

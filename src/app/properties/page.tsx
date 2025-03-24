@@ -4,17 +4,212 @@ import { FaHome, FaFilter, FaSearch } from 'react-icons/fa';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { getAllProperties } from '@/utils/snapshot';
+import { getProperties } from '@/lib/strapi';
+import PropertyCard from '@/components/property-card';
+import path from 'path';
+import fs from 'fs';
 
-// This is a static page that will be pre-rendered at build time
-export const dynamic = 'force-static';
+// Define types for our property structures
+interface StrapiImage {
+  id: number;
+  documentId?: string;
+  name?: string;
+  alternativeText?: string | null;
+  caption?: string | null;
+  width?: number;
+  height?: number;
+  formats?: any;
+  hash?: string;
+  ext?: string;
+  mime?: string;
+  size?: number;
+  url: string;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+}
 
-export default function PropertiesPage() {
-  // Get properties directly from snapshot
-  const properties = getAllProperties({
-    status: 'published',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
+interface StrapiProperty {
+  id: number;
+  documentId?: string;
+  Title: string;
+  Description?: string;
+  Price?: number;
+  Slug?: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  Image?: StrapiImage[];
+}
+
+interface PropertyAttributes {
+  title: string;
+  slug: string;
+  status: string;
+  price: number;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  featuredImage?: {
+    url: string;
+    alternativeText: string;
+    width: number;
+    height: number;
+  } | null;
+  images?: {
+    url: string;
+    alternativeText: string;
+    width: number;
+    height: number;
+  }[];
+}
+
+interface NormalizedProperty {
+  id: number | string;
+  attributes: PropertyAttributes;
+}
+
+// Remove dynamic mode, but keep revalidation
+// export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Revalidate every 60 seconds
+
+export default async function PropertiesPage() {
+  // Get properties from both sources
+  let snapshotProperties: any[] = [];
+  try {
+    snapshotProperties = getAllProperties({
+      status: 'published',
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
+  } catch (error) {
+    console.error('Error loading snapshot properties:', error);
+  }
+  
+  // Fetch Strapi properties at build time
+  let strapiProperties: StrapiProperty[] = [];
+  
+  // Check if we're running in a static export or production build
+  if (process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+    // Try to load from pre-exported data
+    try {
+      const dataPath = path.join(process.cwd(), 'data', 'processed-properties.json');
+      if (fs.existsSync(dataPath)) {
+        const processedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        strapiProperties = processedData || [];
+        console.log(`Loaded ${strapiProperties.length} properties from exported data`);
+      }
+    } catch (error) {
+      console.error('Error loading pre-exported Strapi properties:', error);
+    }
+  } else {
+    // Fetch from Strapi API directly for dynamic builds
+    try {
+      const result = await getProperties();
+      // Check if result has data property and it's an array
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray(result.data)) {
+        strapiProperties = result.data;
+        console.log('Loaded Strapi properties successfully:', strapiProperties.length);
+        
+        // Log the first Strapi property for debugging
+        if (strapiProperties.length > 0) {
+          console.log('First Strapi property:', {
+            id: strapiProperties[0].id,
+            Title: strapiProperties[0].Title,
+            hasImage: Array.isArray(strapiProperties[0].Image) && strapiProperties[0].Image.length > 0
+          });
+        }
+      } else {
+        console.error('Invalid response format from getProperties():', result);
+      }
+    } catch (error) {
+      console.error('Error fetching Strapi properties:', error);
+    }
+  }
+  
+  // Normalize all properties to have consistent structure
+  const normalizedProperties: NormalizedProperty[] = [
+    ...strapiProperties.map((prop: StrapiProperty) => {
+      // The Strapi properties have the fields directly on the object, not nested in attributes
+      const normalized = {
+        id: prop.id,
+        attributes: {
+          title: prop.Title || 'Untitled Property',
+          slug: prop.Slug || `property-${prop.id}`,
+          status: 'published', // Default to published
+          price: prop.Price || 0,
+          description: prop.Description || '',
+          createdAt: prop.createdAt || new Date().toISOString(),
+          updatedAt: prop.updatedAt || new Date().toISOString(),
+          // Handle images
+          featuredImage: prop.Image && prop.Image.length > 0 ? {
+            url: prop.Image[0].url || '',
+            alternativeText: prop.Image[0].alternativeText || prop.Title || '',
+            width: prop.Image[0].width || 800,
+            height: prop.Image[0].height || 600
+          } : null,
+          images: prop.Image && Array.isArray(prop.Image) ? 
+            prop.Image.map((img: StrapiImage) => ({
+              url: img.url || '',
+              alternativeText: img.alternativeText || prop.Title || '',
+              width: img.width || 800,
+              height: img.height || 600
+            })) : []
+        }
+      };
+      
+      // Log the first normalized property for debugging
+      if (prop.id === strapiProperties[0]?.id) {
+        console.log('Normalized first Strapi property:', {
+          id: normalized.id,
+          title: normalized.attributes.title,
+          price: normalized.attributes.price,
+          slug: normalized.attributes.slug,
+          hasFeaturedImage: Boolean(normalized.attributes.featuredImage)
+        });
+      }
+      
+      return normalized;
+    }),
+    ...snapshotProperties.map((prop: any) => {
+      // For snapshot properties, ensure they have the right attributes
+      if (prop.attributes) {
+        return {
+          ...prop,
+          attributes: {
+            ...prop.attributes,
+            status: prop.attributes.status || 'published',
+            title: prop.attributes.title || 'Untitled Property',
+            slug: prop.attributes.slug || `property-${prop.id}`,
+            price: prop.attributes.price || 0
+          }
+        };
+      }
+      return prop;
+    })
+  ];
+  
+  // Log normalized properties
+  console.log('Normalized properties count:', normalizedProperties.length);
+  
+  // Remove duplicates by slug
+  const uniqueSlugs = new Set();
+  const combinedProperties = normalizedProperties.filter(prop => {
+    const slug = prop.attributes?.slug;
+    if (!slug || uniqueSlugs.has(slug)) return false;
+    uniqueSlugs.add(slug);
+    return true;
   });
+  
+  // Log the final combined properties
+  console.log('Final combined properties count:', combinedProperties.length);
+  if (combinedProperties.length > 0) {
+    console.log('First combined property:', {
+      id: combinedProperties[0].id,
+      title: combinedProperties[0].attributes?.title,
+      hasAttributes: Boolean(combinedProperties[0].attributes)
+    });
+  }
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -70,7 +265,7 @@ export default function PropertiesPage() {
           </div>
           
           {/* Property Listings */}
-          {properties.length === 0 ? (
+          {combinedProperties.length === 0 ? (
             <div className="text-center py-16">
               <FaHome className="mx-auto text-6xl text-gray-300 mb-4" />
               <h3 className="text-2xl font-semibold mb-2">No Properties Found</h3>
@@ -84,70 +279,17 @@ export default function PropertiesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {properties.map((property) => (
-                <div 
+              {combinedProperties.map((property) => (
+                <PropertyCard 
                   key={property.id} 
-                  className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative pb-[60%]">
-                    {property.attributes.featured_image?.data?.attributes?.url ? (
-                      <img 
-                        src={property.attributes.featured_image.data.attributes.url} 
-                        alt={property.attributes.title} 
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400">No image</span>
-                      </div>
-                    )}
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        {property.attributes.property_type || 'Property'}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-0 left-0 bg-primary text-white px-3 py-1">
-                      {property.attributes.status === 'published' ? 'For Sale' : property.attributes.status}
-                    </div>
-                  </div>
-                  
-                  <div className="p-4">
-                    <h2 className="text-xl font-semibold mb-2 truncate">
-                      {property.attributes.title}
-                    </h2>
-                    
-                    <p className="text-gray-600 mb-2 truncate">
-                      {property.attributes.location}
-                    </p>
-                    
-                    <div className="text-lg font-bold text-primary mb-3">
-                      {typeof property.attributes.price === 'number' 
-                        ? `$${property.attributes.price.toLocaleString()}` 
-                        : property.attributes.price}
-                    </div>
-                    
-                    <div className="flex justify-between text-sm text-gray-600 border-t pt-3">
-                      <span>{property.attributes.bedrooms} Beds</span>
-                      <span>{property.attributes.bathrooms} Baths</span>
-                      <span>{property.attributes.square_footage} sq ft</span>
-                    </div>
-                  </div>
-                  
-                  <div className="px-4 pb-4">
-                    <Link 
-                      href={`/properties/${property.attributes.slug}`}
-                      className="block w-full text-center bg-primary hover:bg-primary-dark text-white py-2 rounded transition-colors"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
+                  property={property} 
+                />
               ))}
             </div>
           )}
           
           {/* Pagination (static for now) */}
-          {properties.length > 0 && (
+          {combinedProperties.length > 0 && (
             <div className="mt-12 flex justify-center">
               <div className="inline-flex rounded-md shadow-sm">
                 <button className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium rounded-l-md text-gray-700 hover:bg-gray-50">

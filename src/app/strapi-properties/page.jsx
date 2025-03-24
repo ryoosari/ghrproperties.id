@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getProperties, getStrapiMediaUrl } from '@/lib/strapi';
+import { formatPrice, formatWithUnit, truncateText } from '@/lib/formatters';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -15,7 +16,17 @@ export default function StrapiPropertiesPage() {
       try {
         setLoading(true);
         const result = await getProperties();
-        setProperties(result.data || []);
+        console.log('Strapi properties response:', result);
+        
+        // Handle different response structures
+        if (result && result.data) {
+          setProperties(result.data);
+        } else if (Array.isArray(result)) {
+          setProperties(result);
+        } else {
+          setProperties([]);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching properties:', err);
@@ -83,21 +94,30 @@ export default function StrapiPropertiesPage() {
 }
 
 function PropertyCard({ property }) {
-  const { id, attributes } = property;
-  const {
-    title,
-    price,
-    location,
-    bedrooms,
-    bathrooms,
-    area,
-    status,
-    slug,
-    images
-  } = attributes;
-
-  const firstImage = images?.data?.[0];
-  const imageUrl = firstImage ? getStrapiMediaUrl(images) : '/placeholder-property.jpg';
+  console.log('Property data:', property); // Debugging log
+  
+  // Property now directly contains the fields, not nested in attributes
+  
+  // Extract fields with fallbacks for missing data
+  const title = property.Title || 'No Title';
+  const description = property.Description || '';
+  const price = property.Price || 0;
+  const location = property.Location || 'No Location';
+  const bedrooms = property.Bedrooms || 0;
+  const bathrooms = property.Bathrooms || 0;
+  const area = property.Area || 0;
+  const status = property.Status || 'unlisted';
+  const slug = property.Slug || property.id;
+  
+  // Handle the Image array structure
+  const images = property.Image || [];
+  console.log('Image data:', images); // Debugging log
+  
+  const imageUrl = images.length > 0 
+    ? getStrapiMediaUrl(images, 'medium') 
+    : '/placeholder-property.jpg';
+  
+  console.log('Image URL:', imageUrl); // Debugging log
 
   const statusColors = {
     for_sale: 'bg-green-100 text-green-800',
@@ -128,7 +148,7 @@ function PropertyCard({ property }) {
           </div>
         )}
         <div className={`absolute top-4 right-4 px-3 py-1 rounded-full ${statusColors[status] || 'bg-gray-100'}`}>
-          {statusLabels[status] || status}
+          {statusLabels[status] || status || 'Status N/A'}
         </div>
       </div>
       
@@ -138,31 +158,27 @@ function PropertyCard({ property }) {
         
         <div className="flex justify-between items-center mb-4">
           <p className="text-xl font-bold text-primary">
-            {price ? new Intl.NumberFormat('id-ID', {
-              style: 'currency',
-              currency: 'IDR',
-              maximumFractionDigits: 0
-            }).format(price) : 'Price on request'}
+            {formatPrice(price)}
           </p>
         </div>
         
         <div className="flex justify-between text-sm text-gray-600">
           <div className="flex items-center">
             <span className="mr-2">🛏️</span>
-            <span>{bedrooms} Bed</span>
+            <span>{formatWithUnit(bedrooms, 'Bed')}</span>
           </div>
           <div className="flex items-center">
             <span className="mr-2">🚿</span>
-            <span>{bathrooms} Bath</span>
+            <span>{formatWithUnit(bathrooms, 'Bath')}</span>
           </div>
           <div className="flex items-center">
             <span className="mr-2">📏</span>
-            <span>{area} m²</span>
+            <span>{formatWithUnit(area, 'm²')}</span>
           </div>
         </div>
         
         <div className="mt-6">
-          <Link href={`/property/${slug}`} className="block w-full bg-primary text-white text-center py-2 rounded hover:bg-primary-dark transition">
+          <Link href={`/property/${slug || property.id}`} className="block w-full bg-primary text-white text-center py-2 rounded hover:bg-primary-dark transition">
             View Details
           </Link>
         </div>

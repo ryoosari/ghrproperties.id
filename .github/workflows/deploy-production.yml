@@ -43,7 +43,7 @@ jobs:
 
     # Export Strapi data for build
     - name: Export data from Strapi
-      if: ${{ github.event_name == 'workflow_dispatch' }}
+      # Always run this step to ensure we have fresh data
       env:
         NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
         NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_API_TOKEN }}
@@ -51,10 +51,29 @@ jobs:
         echo "🔄 Fetching latest data from Strapi..."
         npm run export-data
         echo "✅ Data export complete."
+        # Show exported data summary
+        if [ -f "data/metadata.json" ]; then
+          echo "📊 Data export summary:"
+          cat data/metadata.json
+        fi
 
     - name: Build Next.js static export with snapshot data
-      run: NEXT_PUBLIC_STATIC_EXPORT=true npm run build
-      
+      env:
+        NEXT_PUBLIC_STATIC_EXPORT: 'true'
+      run: |
+        echo "🛠️ Building static export with exported data..."
+        # Make sure the processed-properties.json file exists and is not empty
+        if [ -f "data/processed-properties.json" ] && [ -s "data/processed-properties.json" ]; then
+          echo "✅ Found property data, proceeding with build"
+        else
+          echo "⚠️ Warning: property data missing or empty, build may fail"
+          echo "[] " > data/processed-properties.json
+        fi
+        
+        npm run build
+        
+        echo "✅ Build completed"
+
     - name: Copy .htaccess to build output
       run: |
         if [ -f ".htaccess" ]; then

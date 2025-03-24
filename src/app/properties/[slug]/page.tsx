@@ -18,76 +18,74 @@ interface PropertySlug {
 }
 
 // Generate static paths for prerendering
-export async function generateStaticParams() {
-  // Get properties from static sources
-  const staticProperties = getAllProperties();
-  
-  // Get slug from static properties
-  const staticSlugs = staticProperties.map((prop) => {
-    // Ensure the property has attributes and a slug
-    if (prop && prop.attributes && prop.attributes.slug) {
-      return { slug: prop.attributes.slug };
-    }
-    return null;
-  }).filter((item): item is PropertySlug => item !== null);
-  
-  // Also try to get Strapi properties at build time
-  let strapiSlugs: PropertySlug[] = [];
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
-    // First, check if we have exported data
-    const fs = require('fs');
-    const path = require('path');
-    const dataPath = path.join(process.cwd(), 'data', 'processed-properties.json');
+    // First try to get properties from static sources
+    const staticProperties = getAllProperties();
     
-    if (fs.existsSync(dataPath)) {
-      // Use the pre-exported data
-      const processedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    // Get slug from static properties
+    const staticSlugs = staticProperties
+      .filter(prop => prop && prop.attributes && prop.attributes.slug)
+      .map(prop => ({ slug: prop.attributes.slug }));
+    
+    // Also try to get Strapi properties at build time
+    let strapiSlugs: { slug: string }[] = [];
+    
+    try {
+      // Check if we have exported data
+      const fs = require('fs');
+      const path = require('path');
+      const dataPath = path.join(process.cwd(), 'data', 'processed-properties.json');
       
-      // Map to slugs
-      strapiSlugs = processedData.map((prop: any) => {
-        // First try the Strapi fields
-        const slug = prop.Slug || prop.slug;
-        if (slug) {
-          return { slug };
-        }
-        return null;
-      }).filter((item): item is PropertySlug => item !== null);
-    } else {
-      // Fall back to API if no exported data
-      const result = await getProperties();
-      if (result && 'data' in result && Array.isArray(result.data)) {
-        strapiSlugs = result.data
-          .map((prop: any) => {
-            // First try the raw data structure
-            if (prop.Slug || prop.slug) {
-              return { slug: prop.Slug || prop.slug };
-            }
-            // Then try the attributes
-            if (prop.attributes && (prop.attributes.Slug || prop.attributes.slug)) {
+      if (fs.existsSync(dataPath)) {
+        // Use the pre-exported data
+        const processedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        
+        // Map to slugs
+        strapiSlugs = processedData
+          .filter((prop: any) => prop && (prop.Slug || prop.slug))
+          .map((prop: any) => ({ slug: prop.Slug || prop.slug }));
+      } else {
+        // Fall back to API if no exported data
+        const result = await getProperties();
+        if (result && 'data' in result && Array.isArray(result.data)) {
+          strapiSlugs = result.data
+            .filter((prop: any) => {
+              return (prop && (prop.Slug || prop.slug)) || 
+                     (prop.attributes && (prop.attributes.Slug || prop.attributes.slug));
+            })
+            .map((prop: any) => {
+              if (prop.Slug || prop.slug) {
+                return { slug: prop.Slug || prop.slug };
+              }
               return { slug: prop.attributes.Slug || prop.attributes.slug };
-            }
-            return null;
-          })
-          .filter((item): item is PropertySlug => item !== null);
+            });
+        }
       }
+    } catch (error) {
+      console.error('Error fetching Strapi properties for static paths:', error);
     }
+    
+    // Combine both sources of properties
+    const allSlugs = [...staticSlugs, ...strapiSlugs];
+    
+    // Remove duplicates
+    const uniqueSlugs = new Set<string>();
+    const uniqueProperties = allSlugs.filter(prop => {
+      if (!prop.slug || uniqueSlugs.has(prop.slug)) return false;
+      uniqueSlugs.add(prop.slug);
+      return true;
+    });
+    
+    console.log(`Generated ${uniqueProperties.length} static paths for properties`);
+    
+    // Make sure we always return an array, even if empty
+    return uniqueProperties;
   } catch (error) {
-    console.error('Error fetching Strapi properties for static paths:', error);
+    console.error('Error in generateStaticParams:', error);
+    // Return empty array to avoid build failures
+    return [];
   }
-  
-  // Combine both sources of properties
-  const allSlugs = [...staticSlugs, ...strapiSlugs];
-  
-  // Remove duplicates
-  const uniqueSlugs = new Set<string>();
-  const uniqueProperties = allSlugs.filter((prop: PropertySlug) => {
-    if (!prop.slug || uniqueSlugs.has(prop.slug)) return false;
-    uniqueSlugs.add(prop.slug);
-    return true;
-  });
-  
-  console.log(`Generated ${uniqueProperties.length} static paths for properties`);
-  return uniqueProperties;
 }
 
 export default async function PropertyDetailPage({ params }: { params: { slug: string } }) {

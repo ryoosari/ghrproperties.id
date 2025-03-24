@@ -4,34 +4,66 @@ RewriteEngine On
 # Set the base
 RewriteBase /
 
-# Rules to properly serve images, scripts, CSS, and other static assets
-RewriteCond %{REQUEST_URI} !\.(html|js|css|png|jpg|jpeg|gif|svg|ico|webp|avif|json)$
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^properties(/.*)?$ properties$1.html [L]
+# Allow direct access to actual files
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Allow direct access to actual directories
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Handle /properties and /properties/ correctly
+RewriteRule ^properties/?$ /properties.html [L]
+
+# Handle /properties/[slug] routes
+RewriteRule ^properties/([^/]+)/?$ /properties/$1.html [L]
+
+# If the file exists with .html extension, serve it
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Redirect all other paths to index.html for client-side routing
+RewriteRule ^([^.]+)$ index.html [L]
+
+# Set proper MIME types
+AddType application/javascript .js
+AddType application/json .json
+AddType text/css .css
+AddType image/svg+xml .svg
 
 # Handling 404 errors
 ErrorDocument 404 /404.html
+ErrorDocument 403 /index.html
 
-# Handle direct access to HTML files
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^\ ]+)\.html
-RewriteRule ^(.*)\.html$ /$1 [R=301,L]
-
-# Default rule - direct all non-file/directory requests to index.html
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
-
-# Set security headers
+# Allow cross-origin
 <IfModule mod_headers.c>
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-XSS-Protection "1; mode=block"
-  Header set X-Frame-Options "SAMEORIGIN"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header set Access-Control-Allow-Origin "*"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Cache control for static assets
+    <FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+    
+    # No cache for HTML files
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
 </IfModule>
 
-# Enable CORS
-<IfModule mod_headers.c>
-  Header set Access-Control-Allow-Origin "*"
+# Add GZIP compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
 </IfModule>
+
+# Try to fix permissions issues
+<FilesMatch "^properties.*">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Process .html extension automatically when not in URL
+Options -MultiViews

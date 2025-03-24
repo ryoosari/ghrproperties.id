@@ -1,17 +1,1 @@
-[
-  {
-    "id": 3,
-    "attributes": {
-      "title": "Untitled Property",
-      "slug": "property-3",
-      "status": "published",
-      "price": 0,
-      "propertyType": "Property",
-      "image": null,
-      "location": "Unknown location",
-      "bedrooms": 0,
-      "bathrooms": 0,
-      "area": 0
-    }
-  }
-]
+[]

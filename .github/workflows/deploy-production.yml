@@ -31,31 +31,19 @@ jobs:
       run: npm ci
 
     # Use pre-exported snapshot data for production build
-    # NOTE: The content snapshot data should be committed to the repository
     - name: Verify snapshot data exists
       run: |
         if [ -d "data" ] && [ -f "data/property-index.json" ]; then
           echo "✅ Snapshot data found. Using existing snapshots for build."
+          
+          # Show exported data summary
+          if [ -f "data/metadata.json" ]; then
+            echo "📊 Data export summary:"
+            cat data/metadata.json
+          fi
         else
-          echo "⚠️ Warning: No snapshot data found. Creating new snapshots..."
-          mkdir -p data
-        fi
-
-    # Export Strapi data for build
-    - name: Export data from Strapi
-      # Always run this step to ensure we have fresh data
-      env:
-        NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
-        NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_API_TOKEN }}
-      run: |
-        echo "🔄 Attempting to fetch latest data from Strapi..."
-        
-        # Create required directories if they don't exist
-        mkdir -p data/properties data/snapshot
-        
-        # Try to run the export script, but continue on error
-        npm run export-data || {
-          echo "⚠️ Strapi export failed, using empty data as fallback"
+          echo "⚠️ Warning: No snapshot data found. Creating empty snapshots..."
+          mkdir -p data/properties data/snapshot
           
           # Create empty processed-properties.json
           echo "[]" > data/processed-properties.json
@@ -71,21 +59,13 @@ jobs:
           
           # Create last-updated.json
           echo "{\"lastUpdated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > data/last-updated.json
-          
-          echo "✅ Created fallback data files"
-        }
-        
-        # Show exported data summary
-        if [ -f "data/metadata.json" ]; then
-          echo "📊 Data export summary:"
-          cat data/metadata.json
         fi
 
     - name: Build Next.js static export with snapshot data
       env:
         NEXT_PUBLIC_STATIC_EXPORT: 'true'
       run: |
-        echo "🛠️ Building static export with exported data..."
+        echo "🛠️ Building static export with pre-exported data..."
         # Make sure the processed-properties.json file exists and is not empty
         if [ -f "data/processed-properties.json" ] && [ -s "data/processed-properties.json" ]; then
           echo "✅ Found property data, proceeding with build"

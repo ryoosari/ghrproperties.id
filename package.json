@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "export-data": "node scripts/export-strapi-data.mjs",
+    "sync-strapi-data": "node scripts/export-strapi-data.mjs && git add data/ && git commit -m \"Update Strapi data export\" && git push origin main || true",
     "snapshot-build": "npm run export-data && NEXT_PUBLIC_STATIC_EXPORT=true next build",
     "static-export": "npm run export-data && sh scripts/static-export.sh",
     "hybrid-build": "npm run export-data && next build",

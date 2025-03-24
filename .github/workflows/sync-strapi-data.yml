@@ -1,0 +1,84 @@
+name: Sync Data from Strapi
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering from GitHub UI
+
+# Add permissions to allow the workflow to commit and push
+permissions:
+  contents: write
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: main
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Export data from Strapi
+      env:
+        NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
+        NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_API_TOKEN }}
+      run: |
+        echo "🔄 Fetching latest data from Strapi..."
+        
+        # Create required directories if they don't exist
+        mkdir -p data/properties data/snapshot
+        
+        # Run the export script
+        npm run export-data
+        
+        # Show exported data summary
+        if [ -f "data/metadata.json" ]; then
+          echo "📊 Data export summary:"
+          cat data/metadata.json
+        fi
+    
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if [[ -z "$(git status --porcelain)" ]]; then
+          echo "No changes detected in data files"
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "Changes detected in data files"
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Configure Git
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        git config --global user.name 'GitHub Actions Bot'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    
+    - name: Commit changes
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        # Add all data files
+        git add data/
+        
+        # Get current date for commit message
+        DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        # Commit the changes
+        git commit -m "Update Strapi data export - $DATE"
+        
+        # Push the changes
+        git push origin main
+        
+        echo "✅ Successfully committed and pushed updated data files" 

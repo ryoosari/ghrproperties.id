@@ -42,30 +42,38 @@ export async function getProperties(options: {
   } else {
     // Dynamic mode: fetch from API
     try {
-      // Build API URL with query parameters
-      const queryParams = new URLSearchParams();
+      // Import strapi client
+      const strapiClient = require('./strapi').default;
+      
+      // Build API params for Strapi
+      const params: Record<string, any> = {
+        populate: '*'
+      };
       
       if (options.limit) {
-        queryParams.append('pagination[limit]', options.limit.toString());
+        params.pagination = {
+          ...(params.pagination || {}),
+          limit: options.limit
+        };
       }
       
       if (options.status) {
-        queryParams.append('filters[status][$eq]', options.status);
+        params.filters = {
+          ...(params.filters || {}),
+          status: {
+            $eq: options.status
+          }
+        };
       }
       
       if (options.sortBy) {
         const sortDir = options.sortOrder || 'desc';
-        queryParams.append('sort', `${options.sortBy}:${sortDir}`);
+        params.sort = [`${options.sortBy}:${sortDir}`];
       }
       
-      // This would be your actual API call
-      // const response = await fetch(`/api/properties?${queryParams.toString()}`);
-      // const data = await response.json();
-      // return data;
-      
-      // For now, just return empty array until API is implemented
-      console.log('Would fetch properties from API with params:', queryParams.toString());
-      return [] as Property[];
+      // Fetch from Strapi API
+      const response = await strapiClient.getProperties(params);
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching properties:', error);
       return [] as Property[];
@@ -83,14 +91,12 @@ export async function getPropertyById(id: number | string) {
   } else {
     // Dynamic mode: fetch from API
     try {
-      // This would be your actual API call
-      // const response = await fetch(`/api/properties/${id}`);
-      // const data = await response.json();
-      // return data;
+      // Import strapi client
+      const strapiClient = require('./strapi').default;
       
-      // For now, just return null until API is implemented
-      console.log(`Would fetch property with ID ${id} from API`);
-      return null;
+      // Fetch from Strapi API
+      const response = await strapiClient.getPropertyById(id);
+      return response.data || null;
     } catch (error) {
       console.error(`Error fetching property ${id}:`, error);
       return null;
@@ -108,14 +114,12 @@ export async function getPropertyBySlugHandler(slug: string) {
   } else {
     // Dynamic mode: fetch from API
     try {
-      // This would be your actual API call
-      // const response = await fetch(`/api/properties?filters[slug][$eq]=${slug}`);
-      // const data = await response.json();
-      // return data.data[0] || null;
+      // Import strapi client
+      const strapiClient = require('./strapi').default;
       
-      // For now, just return null until API is implemented
-      console.log(`Would fetch property with slug ${slug} from API`);
-      return null;
+      // Fetch from Strapi API
+      const response = await strapiClient.getPropertyBySlug(slug);
+      return response || null;
     } catch (error) {
       console.error(`Error fetching property with slug ${slug}:`, error);
       return null;
@@ -148,6 +152,6 @@ export async function getRelatedProperties(propertyId: string | number, limit = 
   });
   
   return allProperties
-    .filter(property => property.id !== propertyId)
+    .filter((property: Property) => property.id !== propertyId)
     .slice(0, limit);
 } 

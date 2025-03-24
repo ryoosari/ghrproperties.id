@@ -1,0 +1,43 @@
+{
+    "collectionName": "components_shared_nearby_places",
+    "info": {
+        "displayName": "Nearby Place",
+        "description": "Points of interest near the property"
+    },
+    "options": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "school",
+                "hospital",
+                "shopping",
+                "restaurant",
+                "park",
+                "transportation",
+                "other"
+            ],
+            "required": true
+        },
+        "distance": {
+            "type": "decimal",
+            "min": 0
+        },
+        "distanceUnit": {
+            "type": "enumeration",
+            "enum": [
+                "km",
+                "m",
+                "mi"
+            ],
+            "default": "km"
+        },
+        "description": {
+            "type": "text"
+        }
+    }
+}

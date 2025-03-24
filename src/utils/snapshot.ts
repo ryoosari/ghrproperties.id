@@ -197,14 +197,28 @@ export async function fetchContent<T>(
   }
   
   // In dynamic mode, fetch from API
-  // You'll need to implement your API fetch logic here
-  // This is just a placeholder
   try {
-    const apiUrl = options.apiEndpoint || `/api/${contentType}`;
-    // Implement your API fetch logic here
+    // Import strapi client
+    const strapiClient = require('../lib/strapi').default;
     
-    // This is a placeholder that would be replaced with actual API calls
-    console.log(`Would fetch from API: ${apiUrl}`);
+    // Handle different content types
+    if (contentType === 'properties') {
+      if (options.id) {
+        const response = await strapiClient.getPropertyById(options.id);
+        return response.data as unknown as T || null;
+      }
+      
+      if (options.slug) {
+        const response = await strapiClient.getPropertyBySlug(options.slug);
+        return response as unknown as T || null;
+      }
+      
+      const response = await strapiClient.getProperties(options.params || {});
+      return (response.data?.[0] || null) as unknown as T;
+    }
+    
+    // Default API call for other content types
+    console.log(`Fetching from API: ${contentType}`);
     return null;
   } catch (error) {
     console.error('Error fetching from API:', error);

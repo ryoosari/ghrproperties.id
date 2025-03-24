@@ -15,7 +15,7 @@ const strapiClient = axios.create({
  * Fetch all properties from Strapi
  * 
  * @param {Object} options - Query options for the request
- * @returns {Promise<Array>} Array of property objects
+ * @returns {Promise<Object>} API response with data and meta properties
  */
 export async function getProperties(options = {}) {
   try {
@@ -47,7 +47,7 @@ export async function getPropertyBySlug(slug) {
             $eq: slug
           }
         },
-        populate: '*'
+        populate: 'deep'
       }
     });
     
@@ -69,7 +69,7 @@ export async function getPropertyById(id) {
   try {
     const response = await strapiClient.get(`/properties/${id}`, {
       params: {
-        populate: '*'
+        populate: 'deep'
       }
     });
     return response.data;
@@ -122,10 +122,33 @@ export async function getFeaturedProperties(limit = 6) {
   }
 }
 
+/**
+ * Generic method to fetch any content type
+ * 
+ * @param {string} contentType - The content type to fetch
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} API response
+ */
+export async function getContent(contentType, options = {}) {
+  try {
+    const params = {
+      populate: '*',
+      ...options
+    };
+    
+    const response = await strapiClient.get(`/${contentType}`, { params });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching ${contentType} from Strapi:`, error);
+    return { data: [], meta: { pagination: { total: 0 } } };
+  }
+}
+
 export default {
   getProperties,
   getPropertyBySlug,
   getPropertyById,
   getStrapiMediaUrl,
-  getFeaturedProperties
+  getFeaturedProperties,
+  getContent
 }; 

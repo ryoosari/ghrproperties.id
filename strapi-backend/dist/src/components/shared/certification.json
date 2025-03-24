@@ -1,0 +1,34 @@
+{
+    "collectionName": "components_shared_certifications",
+    "info": {
+        "displayName": "Certification",
+        "description": "Professional certifications and qualifications"
+    },
+    "options": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "issuer": {
+            "type": "string",
+            "required": true
+        },
+        "issueDate": {
+            "type": "date"
+        },
+        "expiryDate": {
+            "type": "date"
+        },
+        "description": {
+            "type": "text"
+        },
+        "image": {
+            "type": "media",
+            "multiple": false,
+            "allowedTypes": [
+                "images"
+            ]
+        }
+    }
+}

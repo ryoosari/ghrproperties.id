@@ -16,5 +16,18 @@ exports.default = {
      * This gives you an opportunity to set up your data model,
      * run jobs, or perform some special logic.
      */
-    bootstrap( /* { strapi }: { strapi: Core.Strapi } */) { },
+    async bootstrap({ strapi }) {
+        // Get all content types
+        const contentTypes = strapi.contentTypes;
+        // Hide Users & Permissions plugin content types from Content-Type Builder
+        if (contentTypes['plugin::users-permissions.user']) {
+            contentTypes['plugin::users-permissions.user'].visible = false;
+        }
+        if (contentTypes['plugin::users-permissions.permission']) {
+            contentTypes['plugin::users-permissions.permission'].visible = false;
+        }
+        if (contentTypes['plugin::users-permissions.role']) {
+            contentTypes['plugin::users-permissions.role'].visible = false;
+        }
+    },
 };

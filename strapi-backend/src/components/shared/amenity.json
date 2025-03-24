@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_shared_amenities",
+  "info": {
+    "displayName": "Amenity",
+    "description": "Features and facilities of a property"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+} 

@@ -1,0 +1,57 @@
+{
+  "collectionName": "components_shared_property_specs",
+  "info": {
+    "displayName": "Property Specifications",
+    "description": "Key specifications of a property"
+  },
+  "options": {},
+  "attributes": {
+    "bedrooms": {
+      "type": "integer",
+      "min": 0,
+      "required": true
+    },
+    "bathrooms": {
+      "type": "decimal",
+      "min": 0,
+      "required": true
+    },
+    "totalArea": {
+      "type": "decimal",
+      "min": 0,
+      "required": true
+    },
+    "buildingArea": {
+      "type": "decimal",
+      "min": 0
+    },
+    "areaUnit": {
+      "type": "enumeration",
+      "enum": [
+        "sqm",
+        "sqft",
+        "hectare",
+        "acre"
+      ],
+      "default": "sqm"
+    },
+    "floors": {
+      "type": "integer",
+      "min": 1
+    },
+    "parkingSpaces": {
+      "type": "integer",
+      "min": 0,
+      "default": 0
+    },
+    "furnishingStatus": {
+      "type": "enumeration",
+      "enum": [
+        "unfurnished",
+        "semiFurnished",
+        "fullyFurnished"
+      ],
+      "default": "unfurnished"
+    }
+  }
+} 

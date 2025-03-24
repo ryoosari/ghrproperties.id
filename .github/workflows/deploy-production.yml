@@ -37,9 +37,21 @@ jobs:
         if [ -d "data" ] && [ -f "data/property-index.json" ]; then
           echo "✅ Snapshot data found. Using existing snapshots for build."
         else
-          echo "⚠️ Warning: No snapshot data found. Will use mock data for build."
+          echo "⚠️ Warning: No snapshot data found. Creating new snapshots..."
+          mkdir -p data
         fi
-      
+
+    # Export Strapi data for build
+    - name: Export data from Strapi
+      if: ${{ github.event_name == 'workflow_dispatch' }}
+      env:
+        NEXT_PUBLIC_STRAPI_URL: ${{ secrets.STRAPI_URL }}
+        NEXT_PUBLIC_STRAPI_API_TOKEN: ${{ secrets.STRAPI_API_TOKEN }}
+      run: |
+        echo "🔄 Fetching latest data from Strapi..."
+        npm run export-data
+        echo "✅ Data export complete."
+
     - name: Build Next.js static export with snapshot data
       run: NEXT_PUBLIC_STATIC_EXPORT=true npm run build
       

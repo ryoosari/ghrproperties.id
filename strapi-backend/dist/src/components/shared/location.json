@@ -1,0 +1,41 @@
+{
+    "collectionName": "components_shared_locations",
+    "info": {
+        "displayName": "Location",
+        "description": "Address and geographic coordinates for properties"
+    },
+    "options": {},
+    "attributes": {
+        "address": {
+            "type": "string",
+            "required": true
+        },
+        "city": {
+            "type": "string",
+            "required": true
+        },
+        "state": {
+            "type": "string",
+            "required": true
+        },
+        "country": {
+            "type": "string",
+            "required": true
+        },
+        "postalCode": {
+            "type": "string"
+        },
+        "latitude": {
+            "type": "decimal"
+        },
+        "longitude": {
+            "type": "decimal"
+        },
+        "neighborhood": {
+            "type": "string"
+        },
+        "mapUrl": {
+            "type": "string"
+        }
+    }
+}

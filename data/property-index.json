@@ -32,22 +32,5 @@
       "bathrooms": 0,
       "area": 0
     }
-  },
-  {
-    "id": 7,
-    "attributes": {
-      "title": "Test-Property-3",
-      "slug": "property-7",
-      "status": "published",
-      "createdAt": "2025-03-29T23:13:14.965Z",
-      "updatedAt": "2025-03-29T23:13:14.965Z",
-      "price": 0,
-      "propertyType": "Property",
-      "image": null,
-      "location": "Unknown location",
-      "bedrooms": 0,
-      "bathrooms": 0,
-      "area": 0
-    }
   }
 ]

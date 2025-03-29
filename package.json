@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "export-data": "node scripts/export-strapi-data.mjs",
+    "export-and-commit": "AUTO_COMMIT=true node scripts/export-strapi-data.mjs",
     "sync-strapi-data": "node scripts/export-strapi-data.mjs && git add data/ && git commit -m \"Update Strapi data export\" && git push origin main || true",
     "snapshot-build": "npm run export-data && NEXT_PUBLIC_STATIC_EXPORT=true next build",
     "static-export": "npm run export-data && sh scripts/static-export.sh",
@@ -16,7 +17,8 @@
     "test-strapi": "node scripts/test-strapi-connection.mjs",
     "test-dynamic": "node scripts/test-dynamic-mode.mjs",
     "test-property": "node scripts/test-property-display.mjs",
-    "debug-strapi": "node scripts/debug-strapi-property.mjs"
+    "debug-strapi": "node scripts/debug-strapi-property.mjs",
+    "diagnose-strapi": "node scripts/diagnose-strapi.mjs"
   },
   "repository": {
     "type": "git",

@@ -139,9 +139,37 @@ async function exportProperties(stats) {
     };
     
     const queryString = qs.stringify(query, { encodeValuesOnly: true });
-    console.log(`Requesting properties with query: /properties?${queryString}`);
     
-    const response = await strapiClient.get(`/properties?${queryString}`);
+    // Log all available API endpoints for debugging
+    console.log('Checking available API endpoints...');
+    try {
+      const availableEndpoints = await strapiClient.get('/');
+      console.log('Available API endpoints:', JSON.stringify(availableEndpoints.data, null, 2));
+    } catch (error) {
+      console.log('Could not retrieve API endpoints listing');
+    }
+    
+    // Try both API endpoint formats to ensure we're hitting the right one
+    console.log(`Requesting properties with query: /properties?${queryString}`);
+    let response;
+    
+    try {
+      // Standard properties endpoint
+      response = await strapiClient.get(`/properties?${queryString}`);
+      console.log('✅ Successfully fetched from /properties endpoint');
+    } catch (error) {
+      console.log(`Error fetching from /properties endpoint: ${error.message}`);
+      
+      try {
+        // Try the namespaced content-type endpoint format
+        console.log(`Trying alternative endpoint: /api/property?${queryString}`);
+        response = await strapiClient.get(`/api/property?${queryString}`);
+        console.log('✅ Successfully fetched from /api/property endpoint');
+      } catch (altError) {
+        console.error(`Error fetching from alternative endpoint: ${altError.message}`);
+        throw new Error('Failed to fetch properties from any known endpoint');
+      }
+    }
     
     // Log the raw response structure for debugging
     const firstPartOfResponse = JSON.stringify(response.data, null, 2).substring(0, 500);
@@ -416,7 +444,25 @@ function normalizeImages(imagesData) {
 }
 
 // Execute the main function
-exportStrapiData().catch(error => {
-  console.error('Unhandled error during export:', error);
-  process.exit(1);
-}); 
+exportStrapiData()
+  .then(() => {
+    // Check if we should auto-commit data changes
+    if (process.env.AUTO_COMMIT === 'true') {
+      console.log('\n🔄 Running auto-commit for data changes...');
+      
+      // Use dynamic import() for ESM/CommonJS compatibility
+      import('child_process').then(({ execSync }) => {
+        try {
+          execSync('node scripts/auto-commit-data.js', { 
+            stdio: 'inherit' 
+          });
+        } catch (error) {
+          console.error('Error running auto-commit script:', error);
+        }
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Unhandled error during export:', error);
+    process.exit(1);
+  }); 

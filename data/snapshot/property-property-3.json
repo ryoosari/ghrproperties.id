@@ -1,9 +1,9 @@
 {
   "id": 3,
   "attributes": {
-    "title": "Untitled Property",
+    "title": "Test-property",
     "slug": "property-3",
-    "description": "",
+    "description": "Test-desc",
     "status": "published",
     "price": 0,
     "property_type": "Property",
@@ -11,8 +11,14 @@
     "bedrooms": 0,
     "bathrooms": 0,
     "area": 0,
+    "createdAt": "2025-03-24T20:57:16.086Z",
+    "updatedAt": "2025-03-24T20:58:43.472Z",
     "amenities": [],
-    "featured_image": null,
-    "images": []
+    "featured_image": "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg",
+    "images": [
+      "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg"
+    ],
+    "published_at": "2025-03-24T20:58:43.480Z",
+    "documentId": "vmg15py3a8lvndtf8ry48cof"
   }
 }

@@ -42,7 +42,7 @@ if (!fs.existsSync(SNAPSHOT_DIR)) {
 
 // Create a configured axios instance for Strapi
 const strapiClient = axios.create({
-  baseURL: `${STRAPI_URL}/api`,
+  baseURL: STRAPI_URL,
   headers: STRAPI_API_TOKEN 
     ? { Authorization: `Bearer ${STRAPI_API_TOKEN}` }
     : {}
@@ -155,13 +155,13 @@ async function exportProperties(stats) {
     
     try {
       // Standard properties endpoint
-      response = await strapiClient.get(`/properties?${queryString}`);
-      console.log('✅ Successfully fetched from /properties endpoint');
+      response = await strapiClient.get(`/api/properties?${queryString}`);
+      console.log('✅ Successfully fetched from /api/properties endpoint');
     } catch (error) {
-      console.log(`Error fetching from /properties endpoint: ${error.message}`);
+      console.log(`Error fetching from /api/properties endpoint: ${error.message}`);
       
       try {
-        // Try the namespaced content-type endpoint format
+        // Try the singular endpoint format
         console.log(`Trying alternative endpoint: /api/property?${queryString}`);
         response = await strapiClient.get(`/api/property?${queryString}`);
         console.log('✅ Successfully fetched from /api/property endpoint');
@@ -198,8 +198,14 @@ async function exportProperties(stats) {
       // Extract the actual property data
       const property = {
         id: item.id,
-        ...item.attributes
+        // Include all top-level fields from the response
+        ...item,
+        // But also include any attributes if present
+        ...(item.attributes || {})
       };
+      
+      // Log the property structure
+      console.log(`Property ${item.id} structure:`, JSON.stringify(property, null, 2).substring(0, 200) + '...');
       
       return property;
     });
@@ -297,7 +303,7 @@ async function createNormalizedSnapshot() {
         id: property.id,
         attributes: {
           title: property.Title || property.title || 'Untitled Property',
-          slug: property.Slug || property.slug || `property-${property.id}`,
+          slug: `property-${property.id}`,
           description: property.Description || property.description || '',
           status: property.Status || property.status || 'published',
           price: property.Price || property.price || 0,
@@ -311,7 +317,9 @@ async function createNormalizedSnapshot() {
           amenities: normalizeAmenities(property),
           featured_image: normalizeImage(property.Image || property.featured_image),
           images: normalizeImages(property.Image || property.images),
-          published_at: property.publishedAt || property.published_at
+          published_at: property.publishedAt || property.published_at,
+          // Add documentId since it's in our data
+          documentId: property.documentId || ''
         }
       };
     });
@@ -380,11 +388,21 @@ function normalizeImage(imageData) {
     return imageData;
   }
   
-  // If it's an array of Strapi media objects
+  // If it's an array of Strapi media objects (the structure we're seeing)
   if (Array.isArray(imageData) && imageData.length > 0) {
     const image = imageData[0];
     if (image.url) {
       return image.url.startsWith('/') ? `${STRAPI_URL}${image.url}` : image.url;
+    }
+    
+    // Handle the structure we're seeing in the current data
+    if (image.formats && image.formats.medium && image.formats.medium.url) {
+      return image.formats.medium.url.startsWith('/') ? `${STRAPI_URL}${image.formats.medium.url}` : image.formats.medium.url;
+    }
+    
+    // Fallback to thumbnail if available
+    if (image.formats && image.formats.thumbnail && image.formats.thumbnail.url) {
+      return image.formats.thumbnail.url.startsWith('/') ? `${STRAPI_URL}${image.formats.thumbnail.url}` : image.formats.thumbnail.url;
     }
   }
   

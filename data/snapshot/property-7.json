@@ -1,0 +1,22 @@
+{
+  "id": 7,
+  "attributes": {
+    "title": "Test-Property-3",
+    "slug": "property-7",
+    "description": "Test-Property-3",
+    "status": "published",
+    "price": 0,
+    "property_type": "Property",
+    "location": "Unknown location",
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "area": 0,
+    "createdAt": "2025-03-29T23:13:14.965Z",
+    "updatedAt": "2025-03-29T23:13:14.965Z",
+    "amenities": [],
+    "featured_image": null,
+    "images": [],
+    "published_at": "2025-03-29T23:16:48.395Z",
+    "documentId": "dvkul5yd1ycow6pmxj1lt7xv"
+  }
+}

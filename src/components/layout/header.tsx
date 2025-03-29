@@ -40,7 +40,7 @@ export default function Header() {
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         isScrolled
           ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md py-2'
-          : 'bg-transparent py-4'
+          : 'bg-black/50 backdrop-blur-md py-4' // Changed from transparent to semi-transparent black with blur
       )}
     >
       <div className="container flex items-center justify-between">
@@ -56,10 +56,7 @@ export default function Header() {
                 priority
               />
             </div>
-            <span className={cn(
-              "font-heading font-bold text-xl transition-colors",
-              isScrolled ? "text-gray-900 dark:text-white" : "text-white"
-            )}>
+            <span className="font-heading font-bold text-xl text-white transition-colors">
               GHR Properties
             </span>
           </div>
@@ -76,10 +73,10 @@ export default function Header() {
                 pathname === item.href
                   ? isScrolled
                     ? 'bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-primary-300 font-semibold'
-                    : 'bg-white/20 text-white font-semibold backdrop-blur-sm shadow-sm'
+                    : 'bg-primary text-white font-semibold shadow-sm' // Changed active link to primary color for better visibility
                   : isScrolled
                   ? 'text-gray-700 hover:text-primary dark:text-gray-200 dark:hover:text-primary'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
+                  : 'text-white hover:text-white hover:bg-primary/80' // Improved contrast and changed hover effect
               )}
             >
               {item.name}
@@ -98,10 +95,7 @@ export default function Header() {
             <FaTimes className="block h-6 w-6" aria-hidden="true" />
           ) : (
             <FaBars 
-              className={cn(
-                "block h-6 w-6", 
-                isScrolled ? "text-gray-900 dark:text-white" : "text-white"
-              )} 
+              className="block h-6 w-6 text-white" 
               aria-hidden="true" 
             />
           )}

@@ -11,6 +11,7 @@
     "export-data": "node scripts/export-strapi-data.mjs",
     "export-and-commit": "AUTO_COMMIT=true node scripts/export-strapi-data.mjs",
     "sync-strapi-data": "node scripts/export-strapi-data.mjs && git add data/ && git commit -m \"Update Strapi data export\" && git push origin main || true",
+    "quick-export": "sh scripts/export-and-push.sh",
     "snapshot-build": "npm run export-data && NEXT_PUBLIC_STATIC_EXPORT=true next build",
     "static-export": "npm run export-data && sh scripts/static-export.sh",
     "hybrid-build": "npm run export-data && next build",

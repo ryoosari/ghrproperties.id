@@ -2,16 +2,45 @@ import Link from 'next/link';
 import { FaBed, FaBath, FaRuler } from 'react-icons/fa';
 import PropertyCard from '@/components/property-card';
 
+// Define a flexible property interface that handles both legacy and new formats
 interface Property {
-  id: number;
-  title: string;
-  location: string;
-  price: string;
-  bedrooms: number;
-  bathrooms: number;
-  area: string;
-  image: string;
-  type: string;
+  id: number | string;
+  title?: string;
+  Title?: string;
+  location?: string;
+  Location?: string;
+  price?: number | string;
+  Price?: number | string;
+  bedrooms?: number;
+  Bedrooms?: number;
+  bathrooms?: number;
+  Bathrooms?: number;
+  area?: string | number;
+  Area?: string | number;
+  image?: string;
+  Image?: any[];
+  type?: string;
+  property_type?: string;
+  slug?: string;
+  Slug?: string;
+  status?: string;
+  Status?: string;
+  attributes?: {
+    title?: string;
+    location?: string;
+    price?: number | string;
+    bedrooms?: number;
+    bathrooms?: number;
+    area?: string | number;
+    property_type?: string;
+    slug?: string;
+    status?: string;
+    featuredImage?: any;
+    images?: any[];
+    isFeatured?: boolean;
+    [key: string]: any;
+  };
+  [key: string]: any;
 }
 
 interface FeaturedSectionProps {
@@ -19,6 +48,14 @@ interface FeaturedSectionProps {
 }
 
 export function FeaturedSection({ properties }: FeaturedSectionProps) {
+  // Filter out any undefined properties
+  const validProperties = properties.filter(Boolean);
+  
+  // If no properties available, don't render the section
+  if (!validProperties || validProperties.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-16">
       <div className="container">
@@ -52,7 +89,7 @@ export function FeaturedSection({ properties }: FeaturedSectionProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {properties.map((property) => (
+          {validProperties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>

@@ -26,6 +26,19 @@
             ],
             "type": "media",
             "multiple": true
+        },
+        "IsFeatured": {
+            "type": "boolean",
+            "default": false,
+            "description": "Flag indicating whether this property should be displayed in the featured section on the home page"
+        },
+        "Price": {
+            "type": "integer",
+            "min": 0
+        },
+        "Slug": {
+            "type": "string",
+            "unique": true
         }
     }
 }

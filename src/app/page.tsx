@@ -9,45 +9,135 @@ import { SearchBar } from '@/components/search-bar';
 import { FeaturedSection } from '@/components/featured-section';
 import { TestimonialSection } from '@/components/testimonial-section';
 import { CTASection } from '@/components/cta-section';
+import { getAllProperties } from '@/utils/snapshot';
+import { getProperties } from '@/lib/strapi';
+import path from 'path';
+import fs from 'fs';
 
-// Mock data for featured properties
-const featuredProperties = [
-  {
-    id: 1,
-    title: 'Luxury Villa with Pool',
-    location: 'Palm Jumeirah, Dubai',
-    price: '$2,500,000',
-    bedrooms: 5,
-    bathrooms: 6,
-    area: '6,500 sq ft',
-    image: '/images/property-1.jpg',
-    type: 'Villa',
-  },
-  {
-    id: 2,
-    title: 'Modern Apartment with Sea View',
-    location: 'Marina, Dubai',
-    price: '$850,000',
-    bedrooms: 2,
-    bathrooms: 2,
-    area: '1,200 sq ft',
-    image: '/images/property-2.jpg',
-    type: 'Apartment',
-  },
-  {
-    id: 3,
-    title: 'Spacious Family Home',
-    location: 'Arabian Ranches, Dubai',
-    price: '$1,750,000',
-    bedrooms: 4,
-    bathrooms: 4,
-    area: '3,800 sq ft',
-    image: '/images/property-3.jpg',
-    type: 'House',
-  },
-];
+// Set revalidation period
+export const revalidate = 60; // Revalidate every 60 seconds
 
-export default function Home() {
+export default async function Home() {
+  // Get properties using the same approach as in the Properties page
+  let snapshotProperties: any[] = [];
+  try {
+    snapshotProperties = getAllProperties({
+      status: 'published',
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
+  } catch (error) {
+    console.error('Error loading snapshot properties:', error);
+  }
+  
+  // Fetch Strapi properties
+  let strapiProperties: any[] = [];
+  
+  // Check if we're running in a static export or production build
+  if (process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+    // Try to load from pre-exported data
+    try {
+      const dataPath = path.join(process.cwd(), 'data', 'processed-properties.json');
+      if (fs.existsSync(dataPath)) {
+        const processedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        strapiProperties = processedData || [];
+      }
+    } catch (error) {
+      console.error('Error loading pre-exported Strapi properties:', error);
+    }
+  } else {
+    // Fetch from Strapi API directly for dynamic builds
+    try {
+      const result = await getProperties();
+      // Check if result has data property and it's an array
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray(result.data)) {
+        strapiProperties = result.data;
+      }
+    } catch (error) {
+      console.error('Error fetching Strapi properties:', error);
+    }
+  }
+  
+  // Normalize all properties to have consistent structure
+  const normalizedProperties = [
+    ...strapiProperties.map((prop: any) => {
+      // The Strapi properties have the fields directly on the object, not nested in attributes
+      return {
+        id: prop.id,
+        attributes: {
+          title: prop.Title || 'Untitled Property',
+          slug: prop.Slug || `property-${prop.id}`,
+          status: 'published', // Default to published
+          price: prop.Price || 0,
+          description: prop.Description || '',
+          isFeatured: prop.IsFeatured || false, // Check for the featured flag
+          createdAt: prop.createdAt || new Date().toISOString(),
+          updatedAt: prop.updatedAt || new Date().toISOString(),
+          // Handle images
+          featuredImage: prop.Image && prop.Image.length > 0 ? {
+            url: prop.Image[0].url || '',
+            alternativeText: prop.Image[0].alternativeText || prop.Title || '',
+            width: prop.Image[0].width || 800,
+            height: prop.Image[0].height || 600
+          } : null,
+          images: prop.Image && Array.isArray(prop.Image) ? 
+            prop.Image.map((img: any) => ({
+              url: img.url || '',
+              alternativeText: img.alternativeText || prop.Title || '',
+              width: img.width || 800,
+              height: img.height || 600
+            })) : []
+        }
+      };
+    }),
+    ...snapshotProperties.map((prop: any) => {
+      // For snapshot properties, ensure they have the right attributes and check for featured flag
+      if (prop.attributes) {
+        return {
+          ...prop,
+          attributes: {
+            ...prop.attributes,
+            status: prop.attributes.status || 'published',
+            title: prop.attributes.title || 'Untitled Property',
+            slug: prop.attributes.slug || `property-${prop.id}`,
+            price: prop.attributes.price || 0,
+            isFeatured: prop.attributes.isFeatured || false
+          }
+        };
+      }
+      return prop;
+    })
+  ];
+  
+  // Remove duplicates by slug
+  const uniqueSlugs = new Set();
+  const combinedProperties = normalizedProperties.filter(prop => {
+    const slug = prop.attributes?.slug;
+    if (!slug || uniqueSlugs.has(slug)) return false;
+    uniqueSlugs.add(slug);
+    return true;
+  });
+
+  // Get featured properties:
+  // 1. First try to find properties explicitly marked as featured
+  let featuredProperties = combinedProperties.filter(prop => prop.attributes?.isFeatured === true);
+  
+  // 2. If no properties are explicitly marked as featured, use the most recent properties
+  if (featuredProperties.length === 0) {
+    // Sort by createdAt date in descending order (newest first)
+    const sortedProperties = [...combinedProperties].sort((a, b) => {
+      const dateA = new Date(a.attributes?.createdAt || 0).getTime();
+      const dateB = new Date(b.attributes?.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+    
+    // Take the 3 most recent properties
+    featuredProperties = sortedProperties.slice(0, 3);
+  } else if (featuredProperties.length > 3) {
+    // If there are more than 3 featured properties, take the 3 most recent ones
+    featuredProperties = featuredProperties.slice(0, 3);
+  }
+
   return (
     <main className="flex min-h-screen flex-col">
       <Header />

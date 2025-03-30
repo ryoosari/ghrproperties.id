@@ -6,6 +6,9 @@
  * This script fetches data from Strapi and exports it as static JSON files
  * that can be used during the Next.js static site generation build process.
  * 
+ * It also updates property slugs in Strapi to ensure all properties have proper slugs,
+ * eliminating the need to run a separate script for slug updates.
+ * 
  * Usage:
  *   node scripts/export-strapi-data.mjs
  */
@@ -26,6 +29,63 @@ const STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PROPERTIES_DIR = path.join(DATA_DIR, 'properties');
 const SNAPSHOT_DIR = path.join(DATA_DIR, 'snapshot');
+
+// -------------------------
+// Helper Functions - Start
+// -------------------------
+
+/**
+ * Slugify text to create URL-friendly slugs
+ */
+function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/&/g, '-and-')         // Replace & with 'and'
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start
+    .replace(/-+$/, '');            // Trim - from end
+}
+
+/**
+ * Determines if a slug needs to be updated
+ */
+function shouldUpdateSlug(property) {
+  // No slug at all
+  if (!property.Slug && !property.slug) {
+    return true;
+  }
+  
+  const slug = property.Slug || property.slug;
+  const title = property.Title || property.title;
+  
+  // Generic slug that should be replaced
+  if (slug === 'property' || slug === `property-${property.id}`) {
+    return true;
+  }
+  
+  // Title and slug don't match (might indicate a title change)
+  if (title && slug) {
+    const expectedSlug = slugify(title);
+    if (slug !== expectedSlug) {
+      console.log(`Slug mismatch for property #${property.id}: "${slug}" vs expected "${expectedSlug}"`);
+      // Only offer to update if it's clearly a generic slug or very different
+      if (slug.length < 5 || slug.indexOf(expectedSlug.substring(0, 3)) === -1) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+// -------------------------
+// Helper Functions - End
+// -------------------------
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -64,14 +124,20 @@ async function exportStrapiData() {
   console.log(`Using Strapi URL: ${STRAPI_URL}`);
   
   // Start tracking counts
-  const stats = { properties: 0 };
+  const stats = { properties: 0, updatedSlugs: 0 };
   
   try {
-    // 1. Export Properties
-    await exportProperties(stats);
+    // 0. Check Strapi connection and update slugs if needed
+    const success = await updatePropertySlugs(stats);
     
-    // 2. Create normalized snapshot for static generation
-    await createNormalizedSnapshot();
+    // Only continue with export if the connection is successful
+    if (success) {
+      // 1. Export Properties
+      await exportProperties(stats);
+      
+      // 2. Create normalized snapshot for static generation
+      await createNormalizedSnapshot();
+    }
     
   } catch (error) {
     console.error('❌ Error during export:', error);
@@ -117,6 +183,153 @@ async function exportStrapiData() {
     Object.entries(stats).forEach(([key, count]) => {
       console.log(`- ${key}: ${count} items`);
     });
+  }
+}
+
+/**
+ * Update property slugs in Strapi
+ * This is the functionality from update-property-slugs.js, now integrated directly
+ */
+async function updatePropertySlugs(stats) {
+  console.log('\n🔄 Checking and updating property slugs in Strapi...');
+  
+  try {
+    // First check if we can connect to Strapi
+    try {
+      const healthCheck = await strapiClient.get('/');
+      console.log('✅ Successfully connected to Strapi API');
+    } catch (error) {
+      console.error(`❌ Could not connect to Strapi at ${STRAPI_URL}: ${error.message}`);
+      console.log('API may be unavailable or credentials may be incorrect');
+      console.log('Will continue with existing data and skip slug updates');
+      return false;
+    }
+    
+    console.log('Fetching properties from Strapi...');
+    
+    // Try different API endpoints to handle various versions of Strapi
+    const endpoints = [
+      '/api/properties',
+      '/api/property',
+      '/properties'
+    ];
+    
+    let properties = [];
+    let endpointUsed = '';
+    
+    // Try each endpoint until we get a successful response
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying to fetch properties from ${endpoint}...`);
+        const response = await strapiClient.get(endpoint);
+        
+        // Handle different response formats
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          // Strapi v4 format
+          properties = response.data.data.map(item => ({
+            id: item.id,
+            ...item.attributes
+          }));
+          endpointUsed = endpoint;
+          break;
+        } else if (Array.isArray(response.data)) {
+          // Direct array format
+          properties = response.data;
+          endpointUsed = endpoint;
+          break;
+        }
+      } catch (error) {
+        console.log(`Error fetching from ${endpoint}: ${error.message}`);
+      }
+    }
+    
+    if (properties.length === 0) {
+      console.warn('⚠️ Could not fetch properties from any endpoint, skipping slug updates');
+      return false;
+    }
+    
+    console.log(`Found ${properties.length} properties using endpoint: ${endpointUsed}`);
+    
+    // Counter for updated properties
+    let updatedCount = 0;
+    let skippedCount = 0;
+    
+    // Process each property
+    for (const property of properties) {
+      console.log(`\nProcessing property #${property.id}: "${property.Title || property.title || 'Untitled'}"`);
+      
+      if (!property || typeof property !== 'object') {
+        console.log('Invalid property object, skipping');
+        skippedCount++;
+        continue;
+      }
+      
+      const id = property.id;
+      
+      // Check if this property needs a slug update
+      if (!shouldUpdateSlug(property)) {
+        console.log(`Property #${id} already has a valid slug: ${property.Slug || property.slug}, skipping`);
+        skippedCount++;
+        continue;
+      }
+      
+      // Check if property has a title
+      if (!property.Title && !property.title) {
+        console.log(`Property #${id} has no title, skipping`);
+        skippedCount++;
+        continue;
+      }
+      
+      const title = property.Title || property.title;
+      const newSlug = slugify(title);
+      console.log(`Property #${id} "${title}" -> new slug: "${newSlug}"`);
+      
+      try {
+        // Determine the correct endpoint and payload structure based on which endpoint worked
+        let updateEndpoint = '';
+        let updatePayload = {};
+        
+        if (endpointUsed.startsWith('/api/')) {
+          // Strapi v4 format
+          updateEndpoint = `${endpointUsed}/${id}`;
+          updatePayload = {
+            data: {
+              Slug: newSlug
+            }
+          };
+        } else {
+          // Direct format
+          updateEndpoint = `${endpointUsed}/${id}`;
+          updatePayload = {
+            Slug: newSlug
+          };
+        }
+        
+        console.log(`Updating property: PUT ${updateEndpoint}`);
+        console.log(`Payload: ${JSON.stringify(updatePayload)}`);
+        
+        const updateResponse = await strapiClient.put(updateEndpoint, updatePayload);
+        
+        console.log(`Response status: ${updateResponse.status}`);
+        console.log(`✅ Updated property #${id} with slug: ${newSlug}`);
+        updatedCount++;
+      } catch (updateError) {
+        console.error(`❌ Error updating property #${id}:`, updateError.message);
+        if (updateError.response) {
+          console.error('Error response:', updateError.response.data);
+        }
+      }
+    }
+    
+    console.log(`\n✅ Slug update complete. Updated ${updatedCount} properties. Skipped ${skippedCount} properties.`);
+    stats.updatedSlugs = updatedCount;
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error updating slugs:', error.message);
+    console.log('Will continue with export process using existing slugs');
+    return true; // Continue with export even if slug updates fail
   }
 }
 

@@ -1,7 +1,8 @@
 {
-  "exportedAt": "2025-03-30T15:05:25.129Z",
+  "exportedAt": "2025-03-30T15:17:20.672Z",
   "stats": {
-    "properties": 1
+    "properties": 1,
+    "updatedSlugs": 0
   },
   "source": "http://localhost:1337"
 }

@@ -1,67 +1,68 @@
-import Image from 'next/image';
-import { FaQuoteLeft } from 'react-icons/fa';
+import { FaAward, FaHandshake, FaRegClock, FaShieldAlt, FaChartLine, FaRegLightbulb } from 'react-icons/fa';
 
-const testimonials = [
+const strengths = [
   {
     id: 1,
-    content:
-      "GHR Properties helped me find my dream home in just two weeks. Their team was professional, knowledgeable, and truly cared about my needs. I couldn't be happier with my new home!",
-    author: "Sarah Johnson",
-    position: "Homeowner",
-    image: "/images/testimonial-1.jpg",
+    title: "Industry Expertise",
+    description: "With years of experience in the real estate market, our team has in-depth knowledge of property trends, pricing, and investment opportunities.",
+    icon: <FaAward className="text-4xl text-primary" />
   },
   {
     id: 2,
-    content:
-      "As an investor, I've worked with many real estate agencies, but GHR Properties stands out for their market expertise and personalized service. They've helped me secure multiple high-performing properties.",
-    author: "Michael Chen",
-    position: "Real Estate Investor",
-    image: "/images/testimonial-2.jpg",
+    title: "Personalized Service",
+    description: "We take the time to understand your unique needs and preferences, providing tailored solutions for your specific real estate goals.",
+    icon: <FaHandshake className="text-4xl text-primary" />
   },
   {
     id: 3,
-    content:
-      "Selling our family home was an emotional process, but the team at GHR Properties guided us with compassion and professionalism. They secured a great price and made the transition smooth.",
-    author: "Emily & David Rodriguez",
-    position: "Property Sellers",
-    image: "/images/testimonial-3.jpg",
+    title: "24/7 Support",
+    description: "Our dedicated team is always available to address your questions and concerns, ensuring a smooth and stress-free experience.",
+    icon: <FaRegClock className="text-4xl text-primary" />
   },
+  {
+    id: 4,
+    title: "Trusted Partnerships",
+    description: "We've built strong relationships with developers, financial institutions, and service providers to offer you comprehensive support.",
+    icon: <FaShieldAlt className="text-4xl text-primary" />
+  },
+  {
+    id: 5,
+    title: "Market Insights",
+    description: "Stay ahead with our regularly updated market analysis and property investment recommendations tailored to your portfolio goals.",
+    icon: <FaChartLine className="text-4xl text-primary" />
+  },
+  {
+    id: 6,
+    title: "Innovative Solutions",
+    description: "We leverage the latest technology and market strategies to optimize your property search, investment, or sale process.",
+    icon: <FaRegLightbulb className="text-4xl text-primary" />
+  }
 ];
 
 export function TestimonialSection() {
+  // We're keeping the component name the same to avoid having to update imports
   return (
     <section className="py-16 bg-gray-50">
       <div className="container">
         <h2 className="text-3xl md:text-4xl font-heading font-bold text-center mb-4">
-          What Our <span className="text-primary">Clients Say</span>
+          Why Choose <span className="text-primary">GHR Properties</span>
         </h2>
         <p className="text-gray-600 text-center max-w-3xl mx-auto mb-12">
-          Hear from our satisfied clients about their experience working with GHR Properties.
+          Discover the advantages of working with our experienced real estate team.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {strengths.map((item) => (
             <div
-              key={testimonial.id}
-              className="bg-white p-8 rounded-lg shadow-md relative"
+              key={item.id}
+              className="bg-white p-8 rounded-lg shadow-md transition-transform hover:scale-105"
             >
-              <div className="absolute -top-4 left-8 text-primary opacity-20">
-                <FaQuoteLeft size={48} />
-              </div>
-              <p className="text-gray-600 mb-6 relative z-10">{testimonial.content}</p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 relative rounded-full overflow-hidden mr-4">
-                  <Image
-                    src={testimonial.image}
-                    alt={testimonial.author}
-                    fill
-                    className="object-cover"
-                  />
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
+                  {item.icon}
                 </div>
-                <div>
-                  <h4 className="font-bold">{testimonial.author}</h4>
-                  <p className="text-gray-500 text-sm">{testimonial.position}</p>
-                </div>
+                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-gray-600">{item.description}</p>
               </div>
             </div>
           ))}
@@ -69,4 +70,4 @@ export function TestimonialSection() {
       </div>
     </section>
   );
-} 
+}

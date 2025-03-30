@@ -1,6 +1,4 @@
 // import type { Core } from '@strapi/strapi';
-import path from 'path';
-import { execSync } from 'child_process';
 
 export default {
   /**
@@ -33,48 +31,12 @@ export default {
       contentTypes['plugin::users-permissions.role'].visible = false;
     }
     
-    // Set up automatic data export when properties change
-    strapi.db.lifecycles.subscribe({
-      models: ['api::property.property'],
-      
-      // After creating a property
-      afterCreate() {
-        exportStrapiData();
-      },
-      
-      // After updating a property
-      afterUpdate() {
-        exportStrapiData();
-      },
-      
-      // After deleting a property
-      afterDelete() {
-        exportStrapiData();
-      },
-    });
+    // NOTE: Automatic data export has been disabled to prevent Strapi crashes
+    // To export data, use the manual export command:
+    // npm run export-data
+    // or
+    // npm run quick-export
     
-    console.log('✅ Auto-export for properties has been set up');
+    console.log('✅ Strapi bootstrap completed');
   },
 };
-
-/**
- * Run the export-strapi-data script
- */
-function exportStrapiData() {
-  try {
-    console.log('🔄 Content changed, automatically exporting data...');
-    
-    // Path to the Next.js project root (parent of strapi-backend)
-    const projectRoot = path.resolve(__dirname, '../../../');
-    
-    // Run the export script with auto-commit enabled
-    execSync('AUTO_COMMIT=true npm run export-data', {
-      cwd: projectRoot,
-      stdio: 'inherit'
-    });
-    
-    console.log('✅ Data export completed successfully');
-  } catch (error) {
-    console.error('❌ Error exporting data:', error);
-  }
-}

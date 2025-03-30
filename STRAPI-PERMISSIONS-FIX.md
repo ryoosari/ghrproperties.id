@@ -1,66 +1,101 @@
-# Fixing Strapi Permissions
+# Fixing Strapi Loading and Permission Issues
 
-Based on our testing, the issue is with permissions in your Strapi instance. Follow these steps to fix it:
+This guide provides instructions for fixing issues with Strapi when it stops loading after content changes.
 
-## Step 1: Check Your API Token Permissions
+## Issue Diagnosis
 
-1. Log in to your Strapi admin panel at http://localhost:1337/admin
-2. Go to Settings → API Tokens
-3. Find your existing token in the list and click on it
-4. Under "Permissions," look for the "Property" section
-5. Make sure the "find" and "findOne" permissions are checked
-6. Click "Save" to apply the changes
+The main issue identified was that the Strapi backend was running an automatic data export process after every content change (create, update, or delete). This automatic export process was:
 
-## Step 2: Configure Public Role Permissions
+1. Running a complex script with API calls, file operations and Git commands
+2. Potentially causing database locks
+3. Causing the Strapi server to crash or hang
 
-1. While still in the Strapi admin panel, go to Settings → Roles
-2. Click on the "Public" role
-3. Scroll down to find the "Property" section
-4. Check the boxes for "find" and "findOne" permissions
-5. Click "Save" to apply the changes
+## How the Issue Was Fixed
 
-## Step 3: Verify Your API Token
+1. The automatic export process was disabled in `strapi-backend/src/index.ts`
+2. The schema was updated to include proper field types for the Property content type
 
-If the token shown in the `.env.local` file doesn't match the actual token in Strapi:
+## How to Rebuild Strapi after the Fix
 
-1. Go to Settings → API Tokens
-2. Click "Create new API token"
-3. Fill in:
-   - Name: "Next.js Frontend"
-   - Description: "Token for frontend application"
-   - Token duration: Unlimited (or set an expiration date)
-   - Token type: Custom
-4. Set permissions:
-   - Under "Property" enable: find and findOne
-5. Click "Save"
-6. Copy the displayed token
-7. Replace the token in your `.env.local` file:
-   ```
-   NEXT_PUBLIC_STRAPI_API_TOKEN=your-new-token-here
-   ```
+Follow these steps to properly rebuild your Strapi application:
 
-## Step 4: Restart Servers
+### 1. Stop any running Strapi instances
 
-1. Restart your Strapi server (Ctrl+C and run `npm run develop` again)
-2. In your Next.js project directory, run the test script again:
-   ```
-   npm run test-strapi
-   ```
+```bash
+# If running in a terminal, use Ctrl+C to terminate
+# Or find and kill the process
+ps aux | grep strapi
+kill <process_id>
+```
 
-## Step 5: Verify Connection
+### 2. Clean the Strapi build and temp files
 
-If everything is set up correctly, you should now see successful connection messages and your property data.
+```bash
+cd strapi-backend
+rm -rf .tmp
+rm -rf node_modules/.cache
+rm -rf build
+rm -rf dist
+```
 
-## Common Issues and Solutions
+### 3. Install dependencies and rebuild
 
-### Token Issues
-- Make sure there are no spaces, quotes, or line breaks in your token string
-- Copy the token directly from Strapi without modifying it
+```bash
+npm install
+npm run build
+```
 
-### API Routes
-- The API route should be `/api/properties` (plural) not `/api/property` (singular)
-- Check that you're using the correct API ID in Strapi
+### 4. Start Strapi in development mode
 
-### Content Type Structure
-- Ensure your content type has all the required fields (title, slug, etc.)
-- Add at least one published property to test with 
+```bash
+npm run develop
+```
+
+### 5. Update Permissions in the Admin Panel
+
+Once Strapi is running, log into the admin panel at http://localhost:1337/admin and:
+
+1. Go to Settings → Roles → Public
+2. Find the "Property" content type
+3. Enable the following permissions:
+   - Find (GET)
+   - FindOne (GET)
+   - Count (GET)
+
+### 6. Manually Export Data After Making Changes
+
+Instead of automatic exports, run the export manually after making content changes:
+
+```bash
+# From the root project directory
+npm run export-data
+# Or for a complete export and git commit
+npm run quick-export
+```
+
+## Database Backup
+
+It's recommended to regularly back up your Strapi database:
+
+```bash
+# Copy the SQLite database file
+cp strapi-backend/.tmp/data.db strapi-backend/.tmp/data.db.bak
+```
+
+## Troubleshooting
+
+If you continue to experience issues:
+
+1. Check the Strapi logs for error messages
+2. Verify your API token in the .env file is correct
+3. Ensure the database file is not corrupted
+4. Run the fix-permissions script: `npm run fix-permissions`
+
+## Permissions for the IsFeatured Field
+
+Since we added the `IsFeatured` field to the Property content type, make sure to:
+
+1. Go to Settings → Roles → Public
+2. Find the "Property" content type
+3. Make sure the new field is included in the permitted fields list
+4. Update permissions for any other roles (Editor, Author, etc.) as needed

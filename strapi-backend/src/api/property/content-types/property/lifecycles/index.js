@@ -33,6 +33,16 @@ const slugify = (text) => {
   return slug;
 };
 
+/**
+ * Check if a slug needs to be regenerated
+ * This detects generic or problematic slugs that should be replaced
+ */
+const shouldRegenerateSlug = (slug, id) => {
+  if (!slug || slug === '' || slug === null) return true;
+  if (slug === 'property' || slug === `property-${id}`) return true;
+  return false;
+};
+
 module.exports = {
   /**
    * Before saving a new property or updating an existing one
@@ -40,8 +50,10 @@ module.exports = {
   beforeCreate(event) {
     const { data } = event.params;
     
-    // Only generate a slug if Title is provided and Slug is not manually set
-    if (data.Title && !data.Slug) {
+    // Generate a slug in these cases:
+    // 1. When Title is provided but no Slug exists
+    // 2. When the Slug is a generic value like "property"
+    if (data.Title && (shouldRegenerateSlug(data.Slug) || !data.Slug)) {
       // Generate slug from title
       data.Slug = slugify(data.Title);
       console.log(`Auto-generated slug for new property: "${data.Title}" -> "${data.Slug}"`);
@@ -53,15 +65,39 @@ module.exports = {
    */
   beforeUpdate(event) {
     const { data, where } = event.params;
+    const id = where?.id;
     
     // Handle slug generation in these cases:
     // 1. If Title is updated and Slug doesn't exist
     // 2. If Title is updated and Slug is empty
     // 3. If slug field is explicitly set to empty and Title exists (to regenerate)
-    if (data.Title && (data.Slug === null || data.Slug === undefined || data.Slug === '')) {
-      // Generate new slug from title
-      data.Slug = slugify(data.Title);
-      console.log(`Auto-generated slug for updated property: "${data.Title}" -> "${data.Slug}"`);
+    // 4. If the current slug is a generic value like "property"
+    if (data.Title) {
+      if (shouldRegenerateSlug(data.Slug, id) || data.Slug === undefined) {
+        // Generate new slug from title
+        data.Slug = slugify(data.Title);
+        console.log(`Auto-generated slug for updated property: "${data.Title}" -> "${data.Slug}"`);
+      }
+    }
+  },
+  
+  /**
+   * After finding a property, check if it needs a slug update
+   * This helps catch and fix existing properties with generic slugs
+   */
+  async afterFind(event) {
+    const { result } = event;
+    
+    // Skip if no result or no id
+    if (!result || !result.id) return;
+    
+    // Check if this property has a generic slug that should be updated
+    if (result.Title && shouldRegenerateSlug(result.Slug, result.id)) {
+      // Generate a proper slug
+      const newSlug = slugify(result.Title);
+      
+      // Only log - we'll update in a separate process to avoid infinite loops
+      console.log(`Property #${result.id} has a generic slug "${result.Slug}" that should be updated to "${newSlug}"`);
     }
   }
 }; 

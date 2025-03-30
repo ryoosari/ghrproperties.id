@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaHome, FaFilter, FaSearch } from 'react-icons/fa';
+import { FaHome, FaFilter, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { getAllProperties } from '@/utils/snapshot';
@@ -242,25 +242,190 @@ export default async function PropertiesPage() {
       {/* Properties Section */}
       <section className="py-16 bg-gray-50">
         <div className="container">
-          {/* Filters and Sorting (static for now) */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <FaFilter className="text-primary mr-2" />
-              <span className="text-gray-700 font-medium">Filters:</span>
-              <div className="ml-4 space-x-2">
-                <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-primary hover:text-white cursor-pointer transition-colors">All</span>
-                <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-primary hover:text-white cursor-pointer transition-colors">Villa</span>
-                <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-primary hover:text-white cursor-pointer transition-colors">Apartment</span>
-                <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-primary hover:text-white cursor-pointer transition-colors">House</span>
+          {/* Quick Filter Bar - Always Visible */}
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="flex items-center mb-4 md:mb-0">
+                <FaFilter className="text-primary mr-2" />
+                <span className="text-gray-700 font-medium">Quick Filters</span>
+              </div>
+              
+              {/* Basic Filters Row */}
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                {/* Property Type Quick Filter */}
+                <div>
+                  <select className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="">All Property Types</option>
+                    <option value="villa">Villa</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="commercial">Commercial</option>
+                  </select>
+                </div>
+                
+                {/* Location Quick Filter */}
+                <div>
+                  <select className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="">All Locations</option>
+                    <option value="jakarta">Jakarta</option>
+                    <option value="bali">Bali</option>
+                    <option value="surabaya">Surabaya</option>
+                    <option value="bandung">Bandung</option>
+                  </select>
+                </div>
+                
+                {/* Price Quick Filter */}
+                <div>
+                  <select className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="">Any Price</option>
+                    <option value="0-500000000">Under 500M IDR</option>
+                    <option value="500000000-1000000000">500M - 1B IDR</option>
+                    <option value="1000000000-2000000000">1B - 2B IDR</option>
+                    <option value="2000000000">Over 2B IDR</option>
+                  </select>
+                </div>
+                
+                {/* Sort by Dropdown */}
+                <div>
+                  <select className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option>Newest</option>
+                    <option>Price: Low to High</option>
+                    <option>Price: High to Low</option>
+                    <option>Most Popular</option>
+                  </select>
+                </div>
+                
+                {/* Advanced Filters Toggle Button */}
+                <button 
+                  className="inline-flex items-center px-4 py-2 border border-primary bg-white text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
+                  id="advanced-filters-toggle"
+                >
+                  <span className="text-sm font-medium mr-1">Advanced Filters</span>
+                  <FaChevronDown className="h-4 w-4" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-gray-700 font-medium mr-2">Sort by:</span>
-              <select className="border rounded-md p-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                <option>Newest</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-              </select>
+          </div>
+          
+          {/* Advanced Filters - Hidden by Default */}
+          <div id="advanced-filters" className="bg-white p-6 rounded-lg shadow-sm mb-8 hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Property Type Filter */}
+              <div className="mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">Property Type</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input type="checkbox" id="type-all" className="mr-2 h-4 w-4 accent-primary" defaultChecked />
+                    <label htmlFor="type-all" className="text-sm">All Types</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="type-villa" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="type-villa" className="text-sm">Villa</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="type-apartment" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="type-apartment" className="text-sm">Apartment</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="type-house" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="type-house" className="text-sm">House</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="type-commercial" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="type-commercial" className="text-sm">Commercial</label>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Price Range Filter */}
+              <div className="mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">Price Range</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="min-price" className="text-sm text-gray-600 block mb-1">Min Price (IDR)</label>
+                    <input 
+                      type="number" 
+                      id="min-price" 
+                      placeholder="Min Price" 
+                      className="w-full border rounded p-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="max-price" className="text-sm text-gray-600 block mb-1">Max Price (IDR)</label>
+                    <input 
+                      type="number" 
+                      id="max-price" 
+                      placeholder="Max Price" 
+                      className="w-full border rounded p-2 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Bedrooms & Bathrooms */}
+              <div className="mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">Bedrooms & Bathrooms</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="bedrooms" className="text-sm text-gray-600 block mb-1">Bedrooms</label>
+                    <select id="bedrooms" className="w-full border rounded p-2 text-sm">
+                      <option value="">Any</option>
+                      <option value="1">1+</option>
+                      <option value="2">2+</option>
+                      <option value="3">3+</option>
+                      <option value="4">4+</option>
+                      <option value="5">5+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="bathrooms" className="text-sm text-gray-600 block mb-1">Bathrooms</label>
+                    <select id="bathrooms" className="w-full border rounded p-2 text-sm">
+                      <option value="">Any</option>
+                      <option value="1">1+</option>
+                      <option value="2">2+</option>
+                      <option value="3">3+</option>
+                      <option value="4">4+</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Amenities */}
+              <div className="mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">Amenities</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input type="checkbox" id="amenity-pool" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="amenity-pool" className="text-sm">Swimming Pool</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="amenity-parking" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="amenity-parking" className="text-sm">Parking</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="amenity-garden" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="amenity-garden" className="text-sm">Garden</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="amenity-security" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="amenity-security" className="text-sm">24/7 Security</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input type="checkbox" id="amenity-gym" className="mr-2 h-4 w-4 accent-primary" />
+                    <label htmlFor="amenity-gym" className="text-sm">Gym</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Filter Actions */}
+            <div className="flex justify-end mt-4 pt-4 border-t">
+              <button className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium mr-2 hover:bg-gray-300 transition-colors">
+                Clear Filters
+              </button>
+              <button className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-dark transition-colors">
+                Apply Filters
+              </button>
             </div>
           </div>
           

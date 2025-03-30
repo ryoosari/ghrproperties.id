@@ -120,6 +120,10 @@ async function exportProperties(stats) {
   console.log('\n📋 Exporting properties...');
   
   try {
+    // Clean up old property files to prevent stale data
+    console.log('🧹 Cleaning up old property files...');
+    cleanupOldPropertyFiles();
+    
     // Check if we can connect to Strapi first
     try {
       const healthCheck = await strapiClient.get('/');
@@ -255,19 +259,46 @@ async function exportProperties(stats) {
       JSON.stringify(processedProperties, null, 2)
     );
     
+    // Track which files we're creating so we know which ones to keep
+    const currentPropertyFiles = new Set();
+    
     // Write individual property files using processed properties
     processedProperties.forEach(property => {
       const slug = property.Slug || property.slug || `property-${property.id}`;
       
+      // Use slug for naming the files instead of property-id format
+      const slugFilePathInDataDir = path.join(DATA_DIR, `${slug}.json`);
+      const slugFilePath = path.join(PROPERTIES_DIR, `${slug}.json`);
+      
+      // Add to our tracking set
+      currentPropertyFiles.add(slugFilePathInDataDir);
+      currentPropertyFiles.add(slugFilePath);
+      
+      // Use slug for the main file in data directory
       fs.writeFileSync(
-        path.join(DATA_DIR, `properties-${property.id}.json`),
+        slugFilePathInDataDir,
         JSON.stringify(property, null, 2)
       );
       
       // Also store in properties directory
       fs.writeFileSync(
-        path.join(PROPERTIES_DIR, `${slug}.json`),
+        slugFilePath,
         JSON.stringify(property, null, 2)
+      );
+      
+      // For backward compatibility, still create a properties-id.json file
+      // but add a note that this is being deprecated
+      const idFilePath = path.join(DATA_DIR, `properties-${property.id}.json`);
+      currentPropertyFiles.add(idFilePath);
+      
+      const propertyWithNote = {
+        ...property,
+        _note: "This ID-based filename is deprecated. Use the slug-based filename instead."
+      };
+      
+      fs.writeFileSync(
+        idFilePath,
+        JSON.stringify(propertyWithNote, null, 2)
       );
     });
     
@@ -286,6 +317,9 @@ async function createNormalizedSnapshot() {
   console.log('\n📷 Creating normalized data snapshot...');
   
   try {
+    // Clean up old snapshot files first
+    cleanupSnapshotFiles();
+    
     // Load properties data
     const propertiesPath = path.join(DATA_DIR, 'processed-properties.json');
     
@@ -330,17 +364,46 @@ async function createNormalizedSnapshot() {
       JSON.stringify(normalizedProperties, null, 2)
     );
     
+    // Track which snapshot files we're creating to keep track of current data
+    const currentSnapshotFiles = new Set();
+    
     // Write individual normalized property files
     normalizedProperties.forEach(property => {
+      // Get the slug from attributes
+      const slug = property.attributes.slug;
+      
+      // Create the slug-based filename
+      const slugFilePath = path.join(SNAPSHOT_DIR, `${slug}.json`);
+      currentSnapshotFiles.add(slugFilePath);
+      
+      // Write the file with slug-based filename
       fs.writeFileSync(
-        path.join(SNAPSHOT_DIR, `property-${property.id}.json`),
+        slugFilePath,
         JSON.stringify(property, null, 2)
       );
       
-      if (property.attributes.slug) {
+      // For backward compatibility, also create property-id.json and property-slug.json files
+      // but with a note about deprecation
+      const propertyWithNote = {
+        ...property,
+        _note: "This file naming format is deprecated. Please use the slug-based filename format instead."
+      };
+      
+      // Create property-id.json
+      const idFilePath = path.join(SNAPSHOT_DIR, `property-${property.id}.json`);
+      currentSnapshotFiles.add(idFilePath);
+      fs.writeFileSync(
+        idFilePath,
+        JSON.stringify(propertyWithNote, null, 2)
+      );
+      
+      // Create property-slug.json
+      if (slug) {
+        const oldSlugFilePath = path.join(SNAPSHOT_DIR, `property-${slug}.json`);
+        currentSnapshotFiles.add(oldSlugFilePath);
         fs.writeFileSync(
-          path.join(SNAPSHOT_DIR, `property-${property.attributes.slug}.json`),
-          JSON.stringify(property, null, 2)
+          oldSlugFilePath,
+          JSON.stringify(propertyWithNote, null, 2)
         );
       }
     });
@@ -459,6 +522,212 @@ function normalizeImages(imagesData) {
   }
   
   return [];
+}
+
+/**
+ * Clean up snapshot files to ensure they match current Strapi data
+ */
+function cleanupSnapshotFiles() {
+  try {
+    // Check if snapshot directory exists
+    if (!fs.existsSync(SNAPSHOT_DIR)) {
+      console.log('Snapshot directory does not exist, nothing to clean up');
+      return;
+    }
+    
+    // Get the processed properties as reference (if available)
+    let processedProperties = [];
+    const processedPropertiesPath = path.join(DATA_DIR, 'processed-properties.json');
+    
+    if (fs.existsSync(processedPropertiesPath)) {
+      try {
+        processedProperties = JSON.parse(fs.readFileSync(processedPropertiesPath, 'utf8'));
+        console.log(`Using ${processedProperties.length} properties from processed-properties.json as reference`);
+      } catch (error) {
+        console.warn(`Warning: Could not parse processed-properties.json: ${error.message}`);
+        // Continue with empty array if file can't be parsed
+      }
+    }
+    
+    // Create sets of valid IDs and slugs
+    const validIds = new Set(processedProperties.map(p => p.id));
+    const validSlugs = new Set(processedProperties.map(p => 
+      p.Slug || p.slug || `property-${p.id}`
+    ));
+    
+    // Get all files in the snapshot directory
+    const snapshotFiles = fs.readdirSync(SNAPSHOT_DIR).filter(file => file.endsWith('.json'));
+    console.log(`Found ${snapshotFiles.length} files in snapshot directory`);
+    
+    // Keep main properties.json file
+    const propertiesToKeep = new Set(['properties.json']);
+    
+    // Keep files that match valid IDs and slugs
+    let removedFiles = 0;
+    
+    snapshotFiles.forEach(file => {
+      // Skip properties.json master file
+      if (file === 'properties.json') {
+        return;
+      }
+      
+      let shouldKeep = false;
+      
+      // Check if file matches id pattern (property-123.json)
+      const idMatch = file.match(/^property-(\d+)\.json$/);
+      if (idMatch) {
+        const id = parseInt(idMatch[1], 10);
+        if (validIds.has(id)) {
+          shouldKeep = true;
+        }
+      }
+      
+      // Check if file matches old slug pattern (property-slug-name.json)
+      const oldSlugMatch = file.match(/^property-(.+)\.json$/);
+      if (oldSlugMatch && !idMatch) { // Only if it's not an ID file (already checked)
+        const slug = oldSlugMatch[1];
+        if (validSlugs.has(slug)) {
+          shouldKeep = true;
+        }
+      }
+      
+      // Check if file matches new slug pattern (just-the-slug.json)
+      if (file.endsWith('.json') && !idMatch && !oldSlugMatch) {
+        const slug = file.replace(/\.json$/, '');
+        if (validSlugs.has(slug)) {
+          shouldKeep = true;
+        }
+      }
+      
+      // Remove if not in our keep list
+      if (!shouldKeep) {
+        const filePath = path.join(SNAPSHOT_DIR, file);
+        console.log(`Removing stale snapshot file: ${filePath}`);
+        fs.unlinkSync(filePath);
+        removedFiles++;
+      }
+    });
+    
+    console.log(`Cleaned up ${removedFiles} stale files from snapshot directory`);
+    
+  } catch (error) {
+    console.error(`Error during snapshot file cleanup: ${error.message}`);
+    // Continue with the snapshot creation even if cleanup fails
+  }
+}
+
+/**
+ * Clean up old property files to prevent stale data
+ * This ensures deleted properties in Strapi don't persist as files
+ */
+function cleanupOldPropertyFiles() {
+  // Find all files in the properties directory
+  try {
+    // Get all files from the DATA_DIR that look like property files (both ID and slug-based)
+    const dataFiles = fs.readdirSync(DATA_DIR)
+      .filter(file => 
+        file.match(/^properties-\d+\.json$/) || // Old ID-based format
+        (file.endsWith('.json') && file !== 'properties.json' && 
+         file !== 'processed-properties.json' && file !== 'property-index.json' &&
+         file !== 'last-updated.json' && file !== 'metadata.json')
+      );
+    
+    // Get all files from the PROPERTIES_DIR
+    const propertiesFiles = fs.existsSync(PROPERTIES_DIR) 
+      ? fs.readdirSync(PROPERTIES_DIR).filter(file => file.endsWith('.json'))
+      : [];
+    
+    console.log(`Found ${dataFiles.length} property files in data directory`);
+    console.log(`Found ${propertiesFiles.length} property files in properties directory`);
+    
+    // Reading the processed properties file as a reference
+    let processedPropertiesExist = false;
+    let processedProperties = [];
+    
+    const processedPropertiesPath = path.join(DATA_DIR, 'processed-properties.json');
+    if (fs.existsSync(processedPropertiesPath)) {
+      try {
+        processedProperties = JSON.parse(fs.readFileSync(processedPropertiesPath, 'utf8'));
+        processedPropertiesExist = true;
+        console.log(`Read ${processedProperties.length} properties from processed-properties.json as reference`);
+      } catch (error) {
+        console.warn(`Warning: Could not parse processed-properties.json: ${error.message}`);
+      }
+    }
+    
+    // If we don't have a reference file, we can't safely clean up
+    if (!processedPropertiesExist) {
+      console.log('No reference file found, skipping cleanup to prevent data loss');
+      return;
+    }
+    
+    // Create a set of valid IDs and slugs
+    const validIds = new Set(processedProperties.map(p => p.id));
+    const validSlugs = new Set(processedProperties.map(p => 
+      p.Slug || p.slug || `property-${p.id}`
+    ));
+    
+    // Remove files in DATA_DIR that don't correspond to valid properties
+    let removedDataFiles = 0;
+    dataFiles.forEach(file => {
+      // Skip common non-property files (already filtered but keeping this check for safety)
+      if (file === 'properties.json' || file === 'processed-properties.json' || 
+          file === 'property-index.json' || file === 'last-updated.json' ||
+          file === 'metadata.json') {
+        return;
+      }
+      
+      let shouldKeep = false;
+      
+      // Check for ID-based files (properties-123.json)
+      const idMatch = file.match(/^properties-(\d+)\.json$/);
+      if (idMatch) {
+        const id = parseInt(idMatch[1], 10);
+        if (validIds.has(id)) {
+          shouldKeep = true;
+        }
+      } 
+      // Check for slug-based files (any-slug-name.json)
+      else {
+        const slug = file.replace(/\.json$/, '');
+        if (validSlugs.has(slug)) {
+          shouldKeep = true;
+        }
+      }
+      
+      // If file should not be kept, remove it
+      if (!shouldKeep) {
+        const filePath = path.join(DATA_DIR, file);
+        console.log(`Removing stale property file: ${filePath}`);
+        try {
+          fs.unlinkSync(filePath);
+          removedDataFiles++;
+        } catch (err) {
+          console.warn(`Warning: Could not remove file ${filePath}: ${err.message}`);
+        }
+      }
+    });
+    
+    // Remove files in PROPERTIES_DIR that don't correspond to valid slugs
+    let removedPropertiesFiles = 0;
+    propertiesFiles.forEach(file => {
+      // Extract slug from filename (property-name.json -> property-name)
+      const slug = file.replace(/\.json$/, '');
+      if (!validSlugs.has(slug)) {
+        const filePath = path.join(PROPERTIES_DIR, file);
+        console.log(`Removing stale slug file: ${filePath}`);
+        fs.unlinkSync(filePath);
+        removedPropertiesFiles++;
+      }
+    });
+    
+    console.log(`Cleaned up ${removedDataFiles} stale files in data directory`);
+    console.log(`Cleaned up ${removedPropertiesFiles} stale files in properties directory`);
+    
+  } catch (error) {
+    console.error(`Error during file cleanup: ${error.message}`);
+    // Continue with the export process even if cleanup fails
+  }
 }
 
 // Execute the main function

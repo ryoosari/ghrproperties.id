@@ -18,5 +18,6 @@
     "images": [],
     "published_at": "2025-03-30T01:08:44.600Z",
     "documentId": "pg0dvlhh8g0raiw9xunbxny7"
-  }
+  },
+  "_note": "This file naming format is deprecated. Please use the slug-based filename format instead."
 }

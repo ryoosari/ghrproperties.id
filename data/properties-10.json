@@ -82,5 +82,6 @@
       "publishedAt": "2025-03-24T20:37:47.181Z"
     }
   ],
-  "propertyLocation": null
+  "propertyLocation": null,
+  "_note": "This ID-based filename is deprecated. Use the slug-based filename instead."
 }

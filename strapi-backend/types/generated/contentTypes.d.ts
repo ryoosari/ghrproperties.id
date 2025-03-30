@@ -425,7 +425,9 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
       >;
     propertyLocation: Schema.Attribute.Component<'shared.location', false>;
     publishedAt: Schema.Attribute.DateTime;
-    Slug: Schema.Attribute.String & Schema.Attribute.Unique;
+    Slug: Schema.Attribute.UID<'Title'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     Title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

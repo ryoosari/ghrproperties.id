@@ -64,7 +64,8 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
   const bathrooms = attrs.bathrooms || property.Bathrooms || property.bathrooms || 0;
   const area = attrs.area || property.Area || property.area || property.square_footage || 'N/A';
   const type = attrs.property_type || property.property_type || property.type || 'Property';
-  const slug = attrs.slug || property.Slug || property.slug || property.id;
+  // Prioritize the real slug and only fall back to ID format if nothing else is available
+  const slug = attrs.slug || property.Slug || property.slug || `property-${property.id}`;
   
   // Log for debugging - remove in production
   if (typeof window !== 'undefined') {

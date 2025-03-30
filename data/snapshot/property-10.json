@@ -20,5 +20,6 @@
     ],
     "published_at": "2025-03-30T04:06:08.460Z",
     "documentId": "vmg15py3a8lvndtf8ry48cof"
-  }
+  },
+  "_note": "This file naming format is deprecated. Please use the slug-based filename format instead."
 }

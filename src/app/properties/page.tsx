@@ -137,6 +137,7 @@ export default async function PropertiesPage() {
         id: prop.id,
         attributes: {
           title: prop.Title || 'Untitled Property',
+          // Use the slug from Strapi with fallback to property-id format
           slug: prop.Slug || `property-${prop.id}`,
           status: 'published', // Default to published
           price: prop.Price || 0,
@@ -183,6 +184,7 @@ export default async function PropertiesPage() {
             ...prop.attributes,
             status: prop.attributes.status || 'published',
             title: prop.attributes.title || 'Untitled Property',
+            // Use the slug with fallback to property-id format
             slug: prop.attributes.slug || `property-${prop.id}`,
             price: prop.attributes.price || 0
           }

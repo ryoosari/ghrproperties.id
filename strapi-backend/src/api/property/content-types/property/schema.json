@@ -37,7 +37,9 @@
       "min": 0
     },
     "Slug": {
-      "type": "string",
+      "type": "uid",
+      "targetField": "Title",
+      "required": true,
       "unique": true
     },
     "Location": {

@@ -11,5 +11,6 @@
   "Slug": null,
   "Location": null,
   "Image": null,
-  "propertyLocation": null
+  "propertyLocation": null,
+  "_note": "This ID-based filename is deprecated. Use the slug-based filename instead."
 }

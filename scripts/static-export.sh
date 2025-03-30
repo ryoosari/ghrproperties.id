@@ -5,8 +5,12 @@
 
 echo "🚀 Starting static export process..."
 
-# Ensure data directories exist
+# Ensure script is executable
+chmod +x scripts/export-strapi-data.mjs
+
+# Ensure data directories exist and have proper permissions
 mkdir -p data/properties data/snapshot
+chmod -R 755 data
 
 # Check for pre-committed data files first, then try to export data from Strapi
 if [ ! -f "data/processed-properties.json" ] || [ ! -s "data/processed-properties.json" ]; then

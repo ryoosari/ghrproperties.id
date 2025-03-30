@@ -81,13 +81,17 @@ export default async function PropertiesPage() {
   // Get properties from both sources
   let snapshotProperties: any[] = [];
   try {
+    console.log('Attempting to load properties from snapshot...');
     snapshotProperties = getAllProperties({
       status: 'published',
       sortBy: 'createdAt',
       sortOrder: 'desc'
     });
+    console.log(`Loaded ${snapshotProperties.length} properties from snapshot`);
   } catch (error) {
     console.error('Error loading snapshot properties:', error);
+    // Ensure we have at least an empty array
+    snapshotProperties = [];
   }
   
   // Fetch Strapi properties at build time

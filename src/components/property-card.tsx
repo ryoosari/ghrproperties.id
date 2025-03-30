@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
+import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaSearch, FaSwimmingPool, FaParking, FaWifi, FaUtensils, FaSnowflake, FaCheckCircle } from 'react-icons/fa';
 import { cn } from '@/utils/cn';
 import { getStrapiMediaUrl } from '@/lib/strapi';
 import { formatPrice } from '@/lib/formatters';
@@ -30,6 +30,8 @@ interface Property {
   Slug?: string; // Strapi field
   status?: string;
   Status?: string; // Strapi field
+  amenities?: string[]; // Array of amenity strings
+  Amenities?: string[]; // Strapi field with capital A
   attributes?: { // For normalized properties
     title?: string;
     location?: string;
@@ -42,6 +44,8 @@ interface Property {
     status?: string;
     featuredImage?: any;
     images?: any[];
+    amenities?: string[];
+    Amenities?: string[];
     [key: string]: any;
   };
   [key: string]: any; // Allow for other fields
@@ -52,6 +56,22 @@ interface PropertyCardProps {
   className?: string;
 }
 
+// Function to get an icon for an amenity based on its name
+function getAmenityIcon(name: string) {
+  const iconMap: Record<string, any> = {
+    "Swimming Pool": FaSwimmingPool,
+    "Private Pool": FaSwimmingPool,
+    "Shared Pool": FaSwimmingPool,
+    "Parking": FaParking,
+    "WiFi": FaWifi,
+    "Kitchen": FaUtensils,
+    "Air Conditioning": FaSnowflake,
+    "Security Service": FaCheckCircle,
+  };
+  
+  return iconMap[name] || FaCheckCircle;
+}
+
 export default function PropertyCard({ property, className }: PropertyCardProps) {
   // First check if this is a normalized property with attributes
   const attrs = property.attributes || {};
@@ -60,12 +80,83 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
   const title = attrs.title || property.Title || property.title || 'Unnamed Property';
   const location = attrs.location || property.Location || property.location || 'Location not specified';
   const price = attrs.price || property.Price || property.price || 0;
+  // Use the new Strapi fields with fallbacks
   const bedrooms = attrs.bedrooms || property.Bedrooms || property.bedrooms || 0;
   const bathrooms = attrs.bathrooms || property.Bathrooms || property.bathrooms || 0;
   const area = attrs.area || property.Area || property.area || property.square_footage || 'N/A';
-  const type = attrs.property_type || property.property_type || property.type || 'Property';
+  const type = attrs.property_type || property.PropertyType || property.property_type || property.type || 'Property';
   // Prioritize the real slug and only fall back to ID format if nothing else is available
   const slug = attrs.slug || property.Slug || property.slug || `property-${property.id}`;
+  
+  // Extract amenities from component structure or direct array
+  let amenities: string[] = [];
+  
+  // Handle amenities from attributes (normalized properties)
+  if (attrs.Amenities && Array.isArray(attrs.Amenities)) {
+    // For component-based amenities (new format)
+    if (typeof attrs.Amenities[0] === 'object' && 'amenityName' in attrs.Amenities[0]) {
+      amenities = attrs.Amenities.map((amenity: any) => amenity.amenityName || '')
+        .filter(name => name !== '');
+    } 
+    // For direct string arrays (old format)
+    else {
+      amenities = attrs.Amenities as string[];
+    }
+  }
+  // Fallback to lowercase attribute name
+  else if (attrs.amenities && Array.isArray(attrs.amenities)) {
+    amenities = attrs.amenities as string[];
+  }
+  // Handle amenities directly on property
+  else if (property.Amenities && Array.isArray(property.Amenities)) {
+    // For component-based amenities (new format)
+    if (typeof property.Amenities[0] === 'object' && 'amenityName' in property.Amenities[0]) {
+      amenities = property.Amenities.map((amenity: any) => amenity.amenityName || '')
+        .filter(name => name !== '');
+    } 
+    // For direct string arrays (old format)
+    else {
+      amenities = property.Amenities as string[];
+    }
+  }
+  // Fallback to lowercase property name
+  else if (property.amenities && Array.isArray(property.amenities)) {
+    amenities = property.amenities as string[];
+  }
+  
+  // Priority list of amenities we want to show first (if available)
+  const priorityAmenities = [
+    "Swimming Pool", 
+    "Private Pool", 
+    "Ocean View", 
+    "Beach Access", 
+    "Mountain View",
+    "Rice Field View",
+    "WiFi",
+    "Air Conditioning",
+    "Security Service"
+  ];
+  
+  // Get up to 3 important amenities to display on the card
+  const displayAmenities = amenities.length > 0 
+    ? amenities
+        .slice()
+        .sort((a, b) => {
+          // Sort based on priority list
+          const indexA = priorityAmenities.indexOf(a);
+          const indexB = priorityAmenities.indexOf(b);
+          
+          // If both are in priority list, sort by their position in priority list
+          if (indexA >= 0 && indexB >= 0) return indexA - indexB;
+          // If only a is in priority list, it comes first
+          if (indexA >= 0) return -1;
+          // If only b is in priority list, it comes first
+          if (indexB >= 0) return 1;
+          // If neither is in priority list, maintain original order
+          return 0;
+        })
+        .slice(0, 3)
+    : [];
   
   // Log for debugging - remove in production
   if (typeof window !== 'undefined') {
@@ -169,6 +260,24 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
               <span>{typeof area === 'number' ? `${area} m²` : area}</span>
             </div>
           </div>
+          
+          {/* Show important amenities if available */}
+          {displayAmenities.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+              {displayAmenities.map((amenity: string, index: number) => {
+                const Icon = getAmenityIcon(amenity);
+                return (
+                  <div 
+                    key={`${amenity}-${index}`} 
+                    className="bg-gray-100 text-gray-700 text-xs rounded-full px-3 py-1 flex items-center"
+                  >
+                    <Icon className="mr-1 text-primary" size={12} />
+                    <span>{amenity}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </Link>

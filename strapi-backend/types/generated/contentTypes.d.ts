@@ -372,7 +372,7 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
 export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
   collectionName: 'properties';
   info: {
-    description: '';
+    description: 'Real estate property listings';
     displayName: 'Property';
     pluralName: 'properties';
     singularName: 'property';
@@ -381,6 +381,41 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    Amenities: Schema.Attribute.Component<'property.amenities', true> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    Area: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    Bathrooms: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    Bedrooms: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -424,11 +459,24 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
         number
       >;
     propertyLocation: Schema.Attribute.Component<'shared.location', false>;
+    PropertyType: Schema.Attribute.Enumeration<
+      [
+        'Villa',
+        'Apartment',
+        'House',
+        'Land',
+        'Commercial',
+        'Hotel',
+        'Restaurant',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Villa'>;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.UID<'Title'> &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
-    Title: Schema.Attribute.String;
+    Title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

@@ -23,6 +23,9 @@ interface Property {
     status: string;
     createdAt: string;
     updatedAt: string;
+    location?: string;
+    amenities?: string[];
+    Amenities?: string[];
     [key: string]: any;
   };
 }

@@ -7,18 +7,58 @@
   "options": {},
   "attributes": {
     "name": {
-      "type": "string",
-      "required": true
+      "type": "enumeration",
+      "enum": [
+        "Swimming Pool",
+        "Parking",
+        "Garden",
+        "24/7 Security",
+        "Gym",
+        "Air Conditioning",
+        "WiFi",
+        "Kitchen",
+        "TV",
+        "Washing Machine",
+        "Balcony",
+        "Ocean View",
+        "Mountain View",
+        "Rice Field View",
+        "Beach Access",
+        "Private Pool",
+        "Shared Pool",
+        "Hot Tub",
+        "BBQ Area",
+        "Outdoor Dining",
+        "Indoor Dining",
+        "Living Room",
+        "Study/Office Space",
+        "Pet Friendly",
+        "Family Friendly",
+        "Wheelchair Accessible",
+        "Cleaning Service",
+        "Housekeeping",
+        "Airport Transfer",
+        "Breakfast Included"
+      ],
+      "required": true,
+      "description": "The type of amenity offered"
     },
     "icon": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "description": "An icon representing this amenity"
     },
     "description": {
-      "type": "text"
+      "type": "text",
+      "description": "Additional details about this specific amenity"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this amenity should be highlighted as a key feature"
     }
   }
 } 

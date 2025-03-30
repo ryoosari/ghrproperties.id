@@ -5,8 +5,14 @@ import { getPropertyBySlug as getStrapiPropertyBySlug, getStrapiMediaUrl, getPro
 import { notFound } from 'next/navigation';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { FaArrowLeft, FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaRegHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaRegHeart, 
+         FaSwimmingPool, FaParking, FaWifi, FaUtensils, FaSnowflake, FaCheckCircle,
+         FaMap, FaMapMarkedAlt } from 'react-icons/fa';
+import dynamic from 'next/dynamic';
 import { formatPrice } from '@/lib/formatters';
+
+// Import the map component dynamically
+const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
 
 // Remove dynamic mode
 // export const dynamic = 'force-dynamic';
@@ -139,6 +145,22 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
     // Return empty array to avoid build failures in development mode
     return [];
   }
+}
+
+// Function to get an icon for an amenity based on its name
+function getAmenityIcon(name: string) {
+  const iconMap: Record<string, any> = {
+    "Swimming Pool": FaSwimmingPool,
+    "Private Pool": FaSwimmingPool,
+    "Shared Pool": FaSwimmingPool,
+    "Parking": FaParking,
+    "WiFi": FaWifi,
+    "Kitchen": FaUtensils,
+    "Air Conditioning": FaSnowflake,
+    "Security Service": FaCheckCircle,
+  };
+  
+  return iconMap[name] || FaCheckCircle;
 }
 
 export default async function PropertyDetailPage({ params }: { params: { slug: string } }) {
@@ -356,17 +378,111 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
               </div>
             </div>
             
+            {/* Property Location Map */}
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold mb-4 flex items-center">
+                <FaMapMarkedAlt className="mr-2 text-primary" /> Property Location
+              </h2>
+              <div className="h-[400px] w-full rounded-lg overflow-hidden">
+                <DynamicMap 
+                  propertyData={{
+                    title: normalizedProperty.title,
+                    latitude: normalizedProperty.latitude,
+                    longitude: normalizedProperty.longitude,
+                    location: normalizedProperty.location,
+                    address: normalizedProperty.address
+                  }}
+                  height="400px"
+                  estimateRadius={300}
+                />
+              </div>
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p className="flex items-center text-gray-700">
+                  <FaMapMarkerAlt className="mr-2 text-primary" />
+                  <span className="font-medium">
+                    {normalizedProperty.address || normalizedProperty.location || 'Location details not available'}
+                  </span>
+                </p>
+                
+                {normalizedProperty.latitude && normalizedProperty.longitude ? (
+                  <div className="flex items-center mt-2 text-green-600 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1">
+                      <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                    </svg>
+                    <span>Exact coordinates available</span>
+                  </div>
+                ) : (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-amber-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1">
+                        <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                      </svg>
+                      <span>Approximate location shown</span>
+                    </p>
+                    <p className="text-sm text-gray-500 ml-5">
+                      The blue circle shows the approximate area where this property is located. 
+                      For exact location details, please contact our agents.
+                    </p>
+                  </div>
+                )}
+                
+                {normalizedProperty.address && (
+                  <div className="mt-3">
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalizedProperty.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark text-sm flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1">
+                        <path fillRule="evenodd" d="M15.75 2.25H21a.75.75 0 01.75.75v5.25a.75.75 0 01-1.5 0V4.81L8.03 17.03a.75.75 0 01-1.06-1.06L19.19 3.75h-3.44a.75.75 0 010-1.5zm-10.5 4.5a1.5 1.5 0 00-1.5 1.5v10.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5V10.5a.75.75 0 011.5 0v8.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V8.25a3 3 0 013-3h8.25a.75.75 0 010 1.5H5.25z" clipRule="evenodd" />
+                      </svg>
+                      View on Google Maps
+                    </a>
+                  </div>
+                )}
+                
+                <div className="mt-3 text-xs text-gray-500">
+                  <p>
+                    Note: Maps are provided by Leaflet with OpenStreetMap tiles. For static builds, the map will only appear after JavaScript loads.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             {/* Amenities */}
             {normalizedProperty.amenities && normalizedProperty.amenities.length > 0 && (
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">Amenities</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {normalizedProperty.amenities.map((amenity: string, index: number) => (
-                    <div key={index} className="flex items-center">
-                      <span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                      <span>{amenity}</span>
-                    </div>
-                  ))}
+                <h2 className="text-xl font-bold mb-4">Amenities & Features</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {normalizedProperty.amenities.map((amenity: string, index: number) => {
+                    // Priority amenities that should be highlighted
+                    const priorityAmenities = [
+                      "Swimming Pool", 
+                      "Private Pool", 
+                      "Ocean View", 
+                      "Beach Access", 
+                      "Rice Field View",
+                      "Security Service"
+                    ];
+                    
+                    const isHighlighted = priorityAmenities.includes(amenity);
+                    const IconComponent = getAmenityIcon(amenity);
+                    
+                    return (
+                      <div 
+                        key={`${amenity}-${index}`} 
+                        className={`flex items-center p-3 rounded-lg ${
+                          isHighlighted 
+                            ? 'bg-primary/10 text-primary font-medium' 
+                            : 'bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <IconComponent className={`mr-3 ${isHighlighted ? 'text-primary' : 'text-gray-500'}`} />
+                        <span>{amenity}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -413,16 +529,39 @@ function normalizePropertyData(property: any) {
       });
     }
     
-    // Extract amenities if they exist
-    const amenities: string[] = [];
-    if (attributes.amenities?.data && Array.isArray(attributes.amenities.data)) {
-      attributes.amenities.data.forEach((amenity: any) => {
-        if (amenity.attributes?.name) {
-          amenities.push(amenity.attributes.name);
-        }
-      });
+    // Extract amenities if they exist - handle component structure
+    let amenities: string[] = [];
+    
+    // Handle component-based amenities (new format)
+    if (attributes.Amenities && Array.isArray(attributes.Amenities)) {
+      // Extract amenity names from component objects
+      amenities = attributes.Amenities.map((amenity: any) => 
+        amenity.amenityName || amenity.name || ''
+      ).filter(name => name !== '');
+    } 
+    // Handle old format (direct string array)
+    else if (attributes.amenities && Array.isArray(attributes.amenities)) {
+      amenities = attributes.amenities;
     }
     
+    // Extract location details
+    let address = '';
+    let latitude = null;
+    let longitude = null;
+    
+    if (attributes.propertyLocation) {
+      const location = attributes.propertyLocation;
+      
+      // Use the single address field
+      address = location.address || '';
+      
+      // Extract coordinates
+      if (location.latitude && location.longitude) {
+        latitude = parseFloat(location.latitude);
+        longitude = parseFloat(location.longitude);
+      }
+    }
+
     return {
       id: property.id,
       title: attributes.title || 'Unnamed Property',
@@ -431,15 +570,19 @@ function normalizePropertyData(property: any) {
       price: attributes.price || 0,
       bedrooms: attributes.bedrooms || 0,
       bathrooms: attributes.bathrooms || 0,
-      area: attributes.square_footage || attributes.area || 'N/A',
-      property_type: attributes.property_type || 'Property',
+      area: attributes.Area || attributes.square_footage || attributes.area || 'N/A',
+      property_type: attributes.PropertyType || attributes.property_type || 'Property',
       status: attributes.status || 'unlisted',
       kitchen: attributes.kitchen || 1,
       living_room: attributes.living_room || 1,
       featured_image: featuredImageUrl,
       gallery_images: galleryImages,
       amenities: amenities,
-      slug: attributes.slug
+      slug: attributes.slug,
+      // Add location details
+      address: address,
+      latitude: latitude,
+      longitude: longitude
     };
   }
   
@@ -463,9 +606,39 @@ function normalizePropertyData(property: any) {
     });
   }
   
-  // Extract amenities
-  const amenities: string[] = property.Amenities || [];
+  // Extract amenities from Strapi format - handle component structure
+  let amenities: string[] = [];
   
+  // Handle component-based amenities (new format)
+  if (property.Amenities && Array.isArray(property.Amenities)) {
+    // Extract amenity names from component objects
+    amenities = property.Amenities.map((amenity: any) => 
+      amenity.amenityName || amenity.name || ''
+    ).filter(name => name !== '');
+  } 
+  // Handle old format (direct string array)
+  else if (property.amenities && Array.isArray(property.amenities)) {
+    amenities = property.amenities;
+  }
+  
+  // Extract location details
+  let address = '';
+  let latitude = null;
+  let longitude = null;
+  
+  if (property.propertyLocation) {
+    const location = property.propertyLocation;
+    
+    // Use the single address field
+    address = location.address || '';
+    
+    // Extract coordinates
+    if (location.latitude && location.longitude) {
+      latitude = parseFloat(location.latitude);
+      longitude = parseFloat(location.longitude);
+    }
+  }
+
   return {
     id: property.id,
     title: property.Title || 'Unnamed Property',
@@ -482,6 +655,10 @@ function normalizePropertyData(property: any) {
     featured_image: featuredImageUrl,
     gallery_images: galleryImages,
     amenities: amenities,
-    slug: property.Slug || property.slug
+    slug: property.Slug || property.slug,
+    // Add location details
+    address: address,
+    latitude: latitude,
+    longitude: longitude
   };
 } 

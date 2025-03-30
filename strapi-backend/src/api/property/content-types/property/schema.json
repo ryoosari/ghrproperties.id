@@ -5,27 +5,29 @@
     "singularName": "property",
     "pluralName": "properties",
     "displayName": "Property",
-    "description": ""
+    "description": "Real estate property listings"
   },
   "options": {
     "draftAndPublish": true
   },
   "attributes": {
     "Title": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "Description": {
       "type": "text"
     },
     "Image": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": true
+      ]
     },
     "IsFeatured": {
       "type": "boolean",
@@ -35,6 +37,42 @@
     "Price": {
       "type": "integer",
       "min": 0
+    },
+    "Bedrooms": {
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "required": true,
+      "description": "Number of bedrooms in the property"
+    },
+    "Bathrooms": {
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "required": true,
+      "description": "Number of bathrooms in the property"
+    },
+    "Area": {
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "description": "Size of the property in square meters",
+      "required": true
+    },
+    "PropertyType": {
+      "type": "enumeration",
+      "enum": [
+        "Villa",
+        "Apartment",
+        "House",
+        "Land",
+        "Commercial",
+        "Hotel",
+        "Restaurant"
+      ],
+      "default": "Villa",
+      "required": true,
+      "description": "Type of property"
     },
     "Slug": {
       "type": "uid",
@@ -68,6 +106,14 @@
       "type": "component",
       "component": "shared.location",
       "description": "Detailed location information including address and coordinates"
+    },
+    "Amenities": {
+      "type": "component",
+      "component": "property.amenities",
+      "repeatable": true,
+      "required": true,
+      "min": 1,
+      "description": "Select multiple amenities for this property"
     }
   }
 }

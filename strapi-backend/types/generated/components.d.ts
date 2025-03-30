@@ -1,5 +1,50 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface PropertyAmenities extends Struct.ComponentSchema {
+  collectionName: 'components_property_amenities';
+  info: {
+    description: 'Property amenities selection';
+    displayName: 'Amenities';
+  };
+  attributes: {
+    amenityName: Schema.Attribute.Enumeration<
+      [
+        'Swimming Pool',
+        'Parking',
+        'Garden',
+        'Security Service',
+        'Gym',
+        'Air Conditioning',
+        'WiFi',
+        'Kitchen',
+        'TV',
+        'Washing Machine',
+        'Balcony',
+        'Ocean View',
+        'Mountain View',
+        'Rice Field View',
+        'Beach Access',
+        'Private Pool',
+        'Shared Pool',
+        'Hot Tub',
+        'BBQ Area',
+        'Outdoor Dining',
+        'Indoor Dining',
+        'Living Room',
+        'Study Office Space',
+        'Pet Friendly',
+        'Family Friendly',
+        'Wheelchair Accessible',
+        'Cleaning Service',
+        'Housekeeping',
+        'Airport Transfer',
+        'Breakfast Included',
+      ]
+    > &
+      Schema.Attribute.Required;
+  };
+}
+
 export interface SharedAmenity extends Struct.ComponentSchema {
   collectionName: 'components_shared_amenities';
   info: {
@@ -8,8 +53,43 @@ export interface SharedAmenity extends Struct.ComponentSchema {
   };
   attributes: {
     description: Schema.Attribute.Text;
+    featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     icon: Schema.Attribute.Media<'images'>;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.Enumeration<
+      [
+        'Swimming Pool',
+        'Parking',
+        'Garden',
+        '24/7 Security',
+        'Gym',
+        'Air Conditioning',
+        'WiFi',
+        'Kitchen',
+        'TV',
+        'Washing Machine',
+        'Balcony',
+        'Ocean View',
+        'Mountain View',
+        'Rice Field View',
+        'Beach Access',
+        'Private Pool',
+        'Shared Pool',
+        'Hot Tub',
+        'BBQ Area',
+        'Outdoor Dining',
+        'Indoor Dining',
+        'Living Room',
+        'Study/Office Space',
+        'Pet Friendly',
+        'Family Friendly',
+        'Wheelchair Accessible',
+        'Cleaning Service',
+        'Housekeeping',
+        'Airport Transfer',
+        'Breakfast Included',
+      ]
+    > &
+      Schema.Attribute.Required;
   };
 }
 
@@ -32,19 +112,14 @@ export interface SharedCertification extends Struct.ComponentSchema {
 export interface SharedLocation extends Struct.ComponentSchema {
   collectionName: 'components_shared_locations';
   info: {
-    description: 'Address and geographic coordinates for properties';
+    description: 'Complete address and geographic coordinates for properties';
     displayName: 'Location';
   };
   attributes: {
-    address: Schema.Attribute.String & Schema.Attribute.Required;
-    city: Schema.Attribute.String & Schema.Attribute.Required;
-    country: Schema.Attribute.String & Schema.Attribute.Required;
+    address: Schema.Attribute.Text & Schema.Attribute.Required;
     latitude: Schema.Attribute.Decimal;
     longitude: Schema.Attribute.Decimal;
     mapUrl: Schema.Attribute.String;
-    neighborhood: Schema.Attribute.String;
-    postalCode: Schema.Attribute.String;
-    state: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -231,6 +306,7 @@ export interface SharedSocialMedia extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'property.amenities': PropertyAmenities;
       'shared.amenity': SharedAmenity;
       'shared.certification': SharedCertification;
       'shared.location': SharedLocation;

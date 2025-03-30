@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import '@/styles/globals.css';
+// Leaflet CSS will be loaded in the map component directly to avoid SSR issues
 import { ThemeProvider } from '@/components/theme-provider';
 import CacheRefresher from '@/components/CacheRefresher';
 import { NoHydration } from '@/components/NoHydration';

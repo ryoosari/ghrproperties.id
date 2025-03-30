@@ -1,47 +1,47 @@
 [
   {
-    "id": 9,
+    "id": 11,
     "attributes": {
       "title": "Test-property-2",
-      "slug": "property-9",
+      "slug": "property-11",
       "description": "Test-desc-2",
       "status": "published",
       "price": 0,
-      "property_type": "Property",
-      "location": "Unknown location",
-      "bedrooms": 0,
-      "bathrooms": 0,
+      "property_type": "House",
+      "location": "Seminyak, Bali",
+      "bedrooms": 3,
+      "bathrooms": 3,
       "area": 0,
       "createdAt": "2025-03-24T21:46:36.208Z",
-      "updatedAt": "2025-03-30T01:08:44.592Z",
+      "updatedAt": "2025-03-30T07:00:11.695Z",
       "amenities": [],
       "featured_image": null,
       "images": [],
-      "published_at": "2025-03-30T01:08:44.600Z",
+      "published_at": "2025-03-30T07:00:11.708Z",
       "documentId": "pg0dvlhh8g0raiw9xunbxny7"
     }
   },
   {
-    "id": 10,
+    "id": 12,
     "attributes": {
       "title": "Test-property",
-      "slug": "property-10",
+      "slug": "property-12",
       "description": "Test-desc",
       "status": "published",
       "price": 0,
-      "property_type": "Property",
+      "property_type": "Villa",
       "location": "Seminyak, Bali",
-      "bedrooms": 0,
-      "bathrooms": 0,
+      "bedrooms": 3,
+      "bathrooms": 3,
       "area": 0,
       "createdAt": "2025-03-24T20:57:16.086Z",
-      "updatedAt": "2025-03-30T04:06:08.450Z",
+      "updatedAt": "2025-03-30T07:00:56.593Z",
       "amenities": [],
       "featured_image": "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg",
       "images": [
         "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg"
       ],
-      "published_at": "2025-03-30T04:06:08.460Z",
+      "published_at": "2025-03-30T07:00:56.603Z",
       "documentId": "vmg15py3a8lvndtf8ry48cof"
     }
   }

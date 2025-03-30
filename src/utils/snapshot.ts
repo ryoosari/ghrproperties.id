@@ -77,14 +77,114 @@ export function loadCollection<T>(contentType: string): T[] {
  * Load a single item by ID
  */
 export function loadItem<T>(contentType: string, id: number | string): T | null {
-  return loadSnapshotFile<T>(`${contentType}-${id}.json`);
+  // Try direct file first (this is the normal pattern for static snapshots)
+  let data = loadSnapshotFile<T>(`${contentType}/${id}.json`);
+  
+  // If not found, try the legacy pattern
+  if (!data) {
+    data = loadSnapshotFile<T>(`${contentType}-${id}.json`);
+  }
+  
+  return data;
 }
 
 /**
  * Load property index (optimized for quick access)
  */
 export function loadPropertyIndex(): Property[] {
-  return loadSnapshotFile<Property[]>('property-index.json') || [];
+  // First try to load from property-index.json
+  const indexData = loadSnapshotFile<Property[]>('property-index.json');
+  if (indexData && indexData.length > 0) {
+    console.log(`Loaded ${indexData.length} properties from property-index.json`);
+    return indexData;
+  } else {
+    console.log('No properties found in property-index.json or file does not exist');
+  }
+  
+  // If property-index.json is empty or doesn't exist but exists and is explicitly empty,
+  // respect that and return an empty array
+  if (fs.existsSync(path.join(DATA_DIR, 'property-index.json'))) {
+    try {
+      const fileContent = fs.readFileSync(path.join(DATA_DIR, 'property-index.json'), 'utf8');
+      const parsed = JSON.parse(fileContent);
+      if (Array.isArray(parsed) && parsed.length === 0) {
+        console.log('property-index.json exists but is explicitly empty, returning empty array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error parsing property-index.json:', error);
+    }
+  }
+  
+  // If no property index is found, try to build one from individual files
+  try {
+    const propertiesDir = path.join(DATA_DIR, 'properties');
+    if (fs.existsSync(propertiesDir)) {
+      const propertyFiles = fs.readdirSync(propertiesDir)
+        .filter(file => file.endsWith('.json'));
+      
+      if (propertyFiles.length > 0) {
+        console.log(`Found ${propertyFiles.length} property files in properties directory`);
+        return propertyFiles.map(file => {
+          const id = file.replace('.json', '');
+          const property = loadItem<any>('properties', id);
+          
+          if (!property) return null;
+          
+          // Convert to the expected Property format
+          return {
+            id: property.id || id,
+            attributes: {
+              title: property.title || property.Title || 'Untitled Property',
+              slug: property.slug || property.Slug || `property-${id}`,
+              status: property.status || 'published',
+              createdAt: property.createdAt || new Date().toISOString(),
+              updatedAt: property.updatedAt || new Date().toISOString(),
+              // Additional fields
+              price: property.price || property.Price || 0,
+              location: property.location || property.Location || '',
+              // Add other fields as needed
+            }
+          };
+        }).filter(Boolean) as Property[];
+      } else {
+        console.log('No property files found in properties directory');
+      }
+    } else {
+      console.log('Properties directory does not exist');
+    }
+  } catch (error) {
+    console.error('Error building property index from files:', error);
+  }
+  
+  // If still no index, try extracting from a direct properties.json file
+  const allProperties = loadCollection<any>('properties');
+  if (allProperties && allProperties.length > 0) {
+    console.log(`Loaded ${allProperties.length} properties from properties.json`);
+    return allProperties.map(prop => ({
+      id: prop.id,
+      attributes: {
+        title: prop.Title || prop.title || 'Untitled Property',
+        slug: prop.Slug || prop.slug || `property-${prop.id}`,
+        status: 'published',
+        createdAt: prop.createdAt || new Date().toISOString(),
+        updatedAt: prop.updatedAt || new Date().toISOString(),
+        price: prop.Price || prop.price || 0,
+        propertyType: prop.PropertyType || prop.property_type || 'Property',
+        image: prop.Image && Array.isArray(prop.Image) && prop.Image.length > 0 ? 
+          prop.Image[0].url : null,
+        location: prop.Location || prop.location || '',
+        bedrooms: prop.Bedrooms || prop.bedrooms || 0,
+        bathrooms: prop.Bathrooms || prop.bathrooms || 0,
+        area: prop.Area || prop.area || 0
+      }
+    }));
+  } else {
+    console.log('No properties found in properties.json or file does not exist');
+  }
+  
+  console.log('No properties found in any data source');
+  return [];
 }
 
 /**
@@ -99,8 +199,47 @@ export function getPropertyBySlug(slug: string): Property | null {
     return null;
   }
   
-  // Then load the full property data
-  return loadItem<Property>('properties', property.id);
+  // Then try to load the full property data
+  let fullProperty = loadItem<any>('properties', property.id);
+  
+  // If we didn't find a property file, convert the index entry to a full property
+  if (!fullProperty) {
+    return {
+      id: property.id,
+      attributes: {
+        ...property.attributes,
+        // Add any additional processing here if needed
+      }
+    };
+  }
+  
+  // Convert the loaded property to the expected format
+  return {
+    id: fullProperty.id || property.id,
+    attributes: {
+      title: fullProperty.Title || fullProperty.title || property.attributes.title,
+      slug: fullProperty.Slug || fullProperty.slug || property.attributes.slug,
+      status: 'published',
+      createdAt: fullProperty.createdAt || property.attributes.createdAt,
+      updatedAt: fullProperty.updatedAt || property.attributes.updatedAt,
+      description: fullProperty.Description || fullProperty.description || '',
+      price: fullProperty.Price || fullProperty.price || 0,
+      location: fullProperty.Location || fullProperty.location || '',
+      // Handle images
+      featuredImage: fullProperty.Image && Array.isArray(fullProperty.Image) && fullProperty.Image.length > 0 ? {
+        url: fullProperty.Image[0].url,
+        alternativeText: fullProperty.Image[0].alternativeText || fullProperty.Title || '',
+        width: fullProperty.Image[0].width || 800,
+        height: fullProperty.Image[0].height || 600
+      } : null,
+      // Other fields
+      bedrooms: fullProperty.Bedrooms || fullProperty.bedrooms || 0,
+      bathrooms: fullProperty.Bathrooms || fullProperty.bathrooms || 0,
+      area: fullProperty.Area || fullProperty.area || 'N/A',
+      property_type: fullProperty.PropertyType || fullProperty.property_type || 'Property',
+      amenities: fullProperty.Amenities || fullProperty.amenities || []
+    }
+  };
 }
 
 /**
@@ -112,7 +251,60 @@ export function getAllProperties(options: {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 } = {}): Property[] {
-  const properties = loadCollection<Property>('properties');
+  // First try to use a combined file (if it exists)
+  let properties: Property[] = [];
+  
+  const allProperties = loadCollection<any>('properties');
+  if (allProperties && allProperties.length > 0) {
+    // Convert to the standardized Property format
+    properties = allProperties.map(prop => ({
+      id: prop.id,
+      attributes: {
+        title: prop.Title || prop.title || 'Untitled Property',
+        slug: prop.Slug || prop.slug || `property-${prop.id}`,
+        status: 'published',
+        createdAt: prop.createdAt || new Date().toISOString(),
+        updatedAt: prop.updatedAt || new Date().toISOString(),
+        description: prop.Description || prop.description || '',
+        price: prop.Price || prop.price || 0,
+        location: prop.Location || prop.location || '',
+        // Handle images
+        featuredImage: prop.Image && Array.isArray(prop.Image) && prop.Image.length > 0 ? {
+          url: prop.Image[0].url,
+          alternativeText: prop.Image[0].alternativeText || prop.Title || '',
+          width: prop.Image[0].width || 800,
+          height: prop.Image[0].height || 600
+        } : null,
+        // Other fields
+        bedrooms: prop.Bedrooms || prop.bedrooms || 0,
+        bathrooms: prop.Bathrooms || prop.bathrooms || 0,
+        area: prop.Area || prop.area || 'N/A',
+        property_type: prop.PropertyType || prop.property_type || 'Property',
+        amenities: prop.Amenities || prop.amenities || []
+      }
+    }));
+  } else {
+    // If no combined file, try using the property index
+    try {
+      properties = loadPropertyIndex();
+      
+      // If properties is an empty array, that means there are no properties in the data
+      // This is expected behavior when Strapi has no properties or when the export failed
+      if (properties.length === 0) {
+        console.log('No properties found in the property index, returning empty array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error loading property index:', error);
+      return []; // Return empty array when there's an error
+    }
+  }
+  
+  // If we have no properties at this point, return empty array
+  if (!properties || properties.length === 0) {
+    console.log('No properties found in any data source, returning empty array');
+    return [];
+  }
   
   // Filter by status if provided
   let filtered = properties;
@@ -224,4 +416,4 @@ export async function fetchContent<T>(
     console.error('Error fetching from API:', error);
     return null;
   }
-} 
+}

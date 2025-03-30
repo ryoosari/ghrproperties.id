@@ -1,0 +1,23 @@
+{
+  "id": 11,
+  "attributes": {
+    "title": "Test-property-2",
+    "slug": "property-11",
+    "description": "Test-desc-2",
+    "status": "published",
+    "price": 0,
+    "property_type": "House",
+    "location": "Seminyak, Bali",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "area": 0,
+    "createdAt": "2025-03-24T21:46:36.208Z",
+    "updatedAt": "2025-03-30T07:00:11.695Z",
+    "amenities": [],
+    "featured_image": null,
+    "images": [],
+    "published_at": "2025-03-30T07:00:11.708Z",
+    "documentId": "pg0dvlhh8g0raiw9xunbxny7"
+  },
+  "_note": "This file naming format is deprecated. Please use the slug-based filename format instead."
+}

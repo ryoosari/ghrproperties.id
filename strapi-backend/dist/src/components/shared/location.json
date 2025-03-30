@@ -2,40 +2,26 @@
     "collectionName": "components_shared_locations",
     "info": {
         "displayName": "Location",
-        "description": "Address and geographic coordinates for properties"
+        "description": "Complete address and geographic coordinates for properties"
     },
     "options": {},
     "attributes": {
         "address": {
-            "type": "string",
-            "required": true
-        },
-        "city": {
-            "type": "string",
-            "required": true
-        },
-        "state": {
-            "type": "string",
-            "required": true
-        },
-        "country": {
-            "type": "string",
-            "required": true
-        },
-        "postalCode": {
-            "type": "string"
+            "type": "text",
+            "required": true,
+            "description": "Full address including street, city, state, and country"
         },
         "latitude": {
-            "type": "decimal"
+            "type": "decimal",
+            "description": "Latitude coordinate (optional)"
         },
         "longitude": {
-            "type": "decimal"
-        },
-        "neighborhood": {
-            "type": "string"
+            "type": "decimal",
+            "description": "Longitude coordinate (optional)"
         },
         "mapUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "Optional link to external map service"
         }
     }
 }

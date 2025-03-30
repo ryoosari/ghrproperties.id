@@ -37,10 +37,20 @@ export async function getProperties(options = {}) {
     return response.data;
   } catch (error) {
     console.error('Error fetching properties from Strapi:', error);
+    
     if (error.response) {
       console.error('Error status:', error.response.status);
       console.error('Error data:', error.response.data);
+      
+      // For 404 errors (no properties found), we should still return an empty array
+      // This ensures the application can handle the case properly
+      if (error.response.status === 404) {
+        console.log('No properties found (404 response), returning empty data array');
+        return { data: [], meta: { pagination: { total: 0 } } };
+      }
     }
+    
+    // Return empty array for any error so the UI can properly show "no properties found"
     return { data: [], meta: { pagination: { total: 0 } } };
   }
 }

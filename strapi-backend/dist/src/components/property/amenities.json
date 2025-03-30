@@ -1,0 +1,46 @@
+{
+    "collectionName": "components_property_amenities",
+    "info": {
+        "displayName": "Amenities",
+        "description": "Property amenities selection"
+    },
+    "options": {},
+    "attributes": {
+        "amenityName": {
+            "type": "enumeration",
+            "enum": [
+                "Swimming Pool",
+                "Parking",
+                "Garden",
+                "Security Service",
+                "Gym",
+                "Air Conditioning",
+                "WiFi",
+                "Kitchen",
+                "TV",
+                "Washing Machine",
+                "Balcony",
+                "Ocean View",
+                "Mountain View",
+                "Rice Field View",
+                "Beach Access",
+                "Private Pool",
+                "Shared Pool",
+                "Hot Tub",
+                "BBQ Area",
+                "Outdoor Dining",
+                "Indoor Dining",
+                "Living Room",
+                "Study Office Space",
+                "Pet Friendly",
+                "Family Friendly",
+                "Wheelchair Accessible",
+                "Cleaning Service",
+                "Housekeeping",
+                "Airport Transfer",
+                "Breakfast Included"
+            ],
+            "required": true
+        }
+    }
+}

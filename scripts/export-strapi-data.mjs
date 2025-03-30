@@ -48,6 +48,13 @@ const strapiClient = axios.create({
     : {}
 });
 
+// Log configuration details for debugging
+console.log(`\nExport Configuration:`);
+console.log(`- Strapi URL: ${STRAPI_URL}`);
+console.log(`- API Token: ${STRAPI_API_TOKEN ? 'Provided' : 'Not provided'}`);
+console.log(`- Data Directory: ${DATA_DIR}`);
+console.log();
+
 /**
  * Main export function
  */
@@ -153,35 +160,83 @@ async function exportProperties(stats) {
       console.log('Could not retrieve API endpoints listing');
     }
     
-    // Try both API endpoint formats to ensure we're hitting the right one
-    console.log(`Requesting properties with query: /properties?${queryString}`);
+    // Try all possible endpoint formats to ensure we're hitting the right one
+    console.log(`Requesting properties with query parameters: ${queryString}`);
     let response;
+    let endpoints = [
+      `/api/properties?${queryString}`,
+      `/api/property?${queryString}`,
+      `/properties?${queryString}`, 
+      `/property?${queryString}`,
+    ];
     
-    try {
-      // Standard properties endpoint
-      response = await strapiClient.get(`/api/properties?${queryString}`);
-      console.log('✅ Successfully fetched from /api/properties endpoint');
-    } catch (error) {
-      console.log(`Error fetching from /api/properties endpoint: ${error.message}`);
-      
+    let success = false;
+    
+    for (const endpoint of endpoints) {
       try {
-        // Try the singular endpoint format
-        console.log(`Trying alternative endpoint: /api/property?${queryString}`);
-        response = await strapiClient.get(`/api/property?${queryString}`);
-        console.log('✅ Successfully fetched from /api/property endpoint');
-      } catch (altError) {
-        console.error(`Error fetching from alternative endpoint: ${altError.message}`);
-        throw new Error('Failed to fetch properties from any known endpoint');
+        console.log(`Trying endpoint: ${endpoint}`);
+        response = await strapiClient.get(endpoint);
+        console.log(`✅ Successfully fetched from ${endpoint}`);
+        
+        // Verify the response has the expected data structure
+        if (response.data && (response.data.data || Array.isArray(response.data))) {
+          success = true;
+          console.log(`Found valid data structure in response`);
+          break;
+        } else {
+          console.log(`Response doesn't contain expected data structure, trying next endpoint...`);
+        }
+      } catch (error) {
+        console.log(`Error fetching from endpoint ${endpoint}: ${error.message}`);
+        
+        if (error.response) {
+          console.log(`Status: ${error.response.status}, ${error.response.statusText}`);
+        }
       }
+    }
+    
+    if (!success) {
+      console.error(`Failed to fetch properties from any known endpoint`);
+      console.error(`This could be due to missing authentication, network issues, or incorrect URL`);
+      console.error(`If you have added properties in Strapi, make sure they're published and accessible`);
+      
+      // Instead of failing completely, create empty data files
+      console.log(`Creating empty properties files to handle the no-data scenario correctly...`);
+      response = { data: { data: [] } }; // Empty data structure
     }
     
     // Log the raw response structure for debugging
     const firstPartOfResponse = JSON.stringify(response.data, null, 2).substring(0, 500);
     console.log(`Raw Strapi response structure (first 500 chars): ${firstPartOfResponse}...`);
     
-    const { data, meta } = response.data;
+    // Handle different response formats (Strapi v4 vs v3 or other formats)
+    let data = [];
+    let meta = {};
     
-    if (!data || !Array.isArray(data)) {
+    // Check response format and extract data accordingly
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      // Standard Strapi v4 format with data and meta
+      data = response.data.data;
+      meta = response.data.meta || {};
+      console.log('Using Strapi v4 response format (data + meta)');
+    } else if (Array.isArray(response.data)) {
+      // Direct array format
+      data = response.data;
+      console.log('Using direct array response format');
+    } else if (response.data && Array.isArray(response.data.results)) {
+      // Some APIs use a results array
+      data = response.data.results;
+      meta = response.data.pagination || {};
+      console.log('Using results array response format');
+    } else {
+      console.warn('⚠️ Unrecognized response format from Strapi');
+      if (response.data) {
+        console.log('Response data keys:', Object.keys(response.data));
+      }
+      data = [];
+    }
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
       console.warn('⚠️ No properties data returned from Strapi');
       stats.properties = 0;
       return;

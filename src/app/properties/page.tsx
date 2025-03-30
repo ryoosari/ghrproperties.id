@@ -36,6 +36,7 @@ interface StrapiProperty {
   Description?: string;
   Price?: number;
   Slug?: string;
+  Location?: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
@@ -50,6 +51,7 @@ interface PropertyAttributes {
   description: string;
   createdAt: string;
   updatedAt: string;
+  location?: string;
   featuredImage?: {
     url: string;
     alternativeText: string;
@@ -138,6 +140,7 @@ export default async function PropertiesPage() {
           slug: prop.Slug || `property-${prop.id}`,
           status: 'published', // Default to published
           price: prop.Price || 0,
+          location: prop.Location || '',
           description: prop.Description || '',
           createdAt: prop.createdAt || new Date().toISOString(),
           updatedAt: prop.updatedAt || new Date().toISOString(),
@@ -210,6 +213,18 @@ export default async function PropertiesPage() {
       hasAttributes: Boolean(combinedProperties[0].attributes)
     });
   }
+  
+  // Extract unique locations from properties
+  const uniqueLocations = new Set<string>();
+  combinedProperties.forEach(property => {
+    const location = property.attributes?.location;
+    if (location && location.trim() !== '') {
+      uniqueLocations.add(location.trim());
+    }
+  });
+  
+  // Convert to sorted array
+  const availableLocations = Array.from(uniqueLocations).sort();
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -267,10 +282,15 @@ export default async function PropertiesPage() {
                 <div>
                   <select className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                     <option value="">All Locations</option>
-                    <option value="jakarta">Jakarta</option>
-                    <option value="bali">Bali</option>
-                    <option value="surabaya">Surabaya</option>
-                    <option value="bandung">Bandung</option>
+                    {availableLocations.length > 0 ? (
+                      availableLocations.map((location) => (
+                        <option key={location} value={location.toLowerCase()}>
+                          {location}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>No locations available</option>
+                    )}
                   </select>
                 </div>
                 
@@ -388,6 +408,23 @@ export default async function PropertiesPage() {
                     </select>
                   </div>
                 </div>
+              </div>
+              
+              {/* Location Filter */}
+              <div className="mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">Location</h3>
+                <select id="advanced-location" className="w-full border rounded p-2 text-sm">
+                  <option value="">All Locations</option>
+                  {availableLocations.length > 0 ? (
+                    availableLocations.map((location) => (
+                      <option key={location} value={location.toLowerCase()}>
+                        {location}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No locations available</option>
+                  )}
+                </select>
               </div>
               
               {/* Amenities */}

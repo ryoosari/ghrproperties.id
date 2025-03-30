@@ -1,35 +1,36 @@
 [
   {
-    "id": 3,
-    "attributes": {
-      "title": "Test-property",
-      "slug": "property-3",
-      "status": "published",
-      "createdAt": "2025-03-24T20:57:16.086Z",
-      "updatedAt": "2025-03-24T20:58:43.472Z",
-      "price": 0
-    }
-  },
-  {
-    "id": 5,
+    "id": 9,
     "attributes": {
       "title": "Test-property-2",
-      "slug": "property-5",
+      "slug": "property-9",
       "status": "published",
       "createdAt": "2025-03-24T21:46:36.208Z",
-      "updatedAt": "2025-03-24T21:46:36.974Z",
-      "price": 0
+      "updatedAt": "2025-03-30T01:08:44.592Z",
+      "price": 0,
+      "propertyType": "Property",
+      "image": null,
+      "location": "Unknown location",
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "area": 0
     }
   },
   {
-    "id": 7,
+    "id": 10,
     "attributes": {
-      "title": "Test-Property-3",
-      "slug": "property-7",
+      "title": "Test-property",
+      "slug": "property-10",
       "status": "published",
-      "createdAt": "2025-03-29T23:13:14.965Z",
-      "updatedAt": "2025-03-29T23:13:14.965Z",
-      "price": 0
+      "createdAt": "2025-03-24T20:57:16.086Z",
+      "updatedAt": "2025-03-30T04:06:08.450Z",
+      "price": 0,
+      "propertyType": "Property",
+      "image": "/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg",
+      "location": "Seminyak, Bali",
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "area": 0
     }
   }
 ]

@@ -39,6 +39,33 @@
         "Slug": {
             "type": "string",
             "unique": true
+        },
+        "Location": {
+            "type": "enumeration",
+            "enum": [
+                "Kuta, Bali",
+                "Seminyak, Bali",
+                "Ubud, Bali",
+                "Canggu, Bali",
+                "Denpasar, Bali",
+                "Sanur, Bali",
+                "Nusa Dua, Bali",
+                "Jimbaran, Bali",
+                "Uluwatu, Bali",
+                "Legian, Bali",
+                "Tabanan, Bali",
+                "Gianyar, Bali",
+                "Amed, Bali",
+                "Lovina, Bali"
+            ],
+            "description": "The area where the property is located",
+            "default": "Kuta, Bali",
+            "required": true
+        },
+        "propertyLocation": {
+            "type": "component",
+            "component": "shared.location",
+            "description": "Detailed location information including address and coordinates"
         }
     }
 }

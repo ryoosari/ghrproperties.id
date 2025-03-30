@@ -1,12 +1,31 @@
 [
   {
-    "id": 3,
+    "id": 9,
+    "documentId": "pg0dvlhh8g0raiw9xunbxny7",
+    "Title": "Test-property-2",
+    "Description": "Test-desc-2",
+    "createdAt": "2025-03-24T21:46:36.208Z",
+    "updatedAt": "2025-03-30T01:08:44.592Z",
+    "publishedAt": "2025-03-30T01:08:44.600Z",
+    "IsFeatured": true,
+    "Price": null,
+    "Slug": null,
+    "Location": null,
+    "Image": null,
+    "propertyLocation": null
+  },
+  {
+    "id": 10,
     "documentId": "vmg15py3a8lvndtf8ry48cof",
     "Title": "Test-property",
     "Description": "Test-desc",
     "createdAt": "2025-03-24T20:57:16.086Z",
-    "updatedAt": "2025-03-24T20:58:43.472Z",
-    "publishedAt": "2025-03-24T20:58:43.480Z",
+    "updatedAt": "2025-03-30T04:06:08.450Z",
+    "publishedAt": "2025-03-30T04:06:08.460Z",
+    "IsFeatured": true,
+    "Price": null,
+    "Slug": null,
+    "Location": "Seminyak, Bali",
     "Image": [
       {
         "id": 1,
@@ -78,26 +97,7 @@
         "updatedAt": "2025-03-24T20:58:36.636Z",
         "publishedAt": "2025-03-24T20:37:47.181Z"
       }
-    ]
-  },
-  {
-    "id": 5,
-    "documentId": "pg0dvlhh8g0raiw9xunbxny7",
-    "Title": "Test-property-2",
-    "Description": "Test-desc-2",
-    "createdAt": "2025-03-24T21:46:36.208Z",
-    "updatedAt": "2025-03-24T21:46:36.974Z",
-    "publishedAt": "2025-03-24T21:46:36.981Z",
-    "Image": null
-  },
-  {
-    "id": 7,
-    "documentId": "dvkul5yd1ycow6pmxj1lt7xv",
-    "Title": "Test-Property-3",
-    "Description": "Test-Property-3",
-    "createdAt": "2025-03-29T23:13:14.965Z",
-    "updatedAt": "2025-03-29T23:13:14.965Z",
-    "publishedAt": "2025-03-29T23:16:48.395Z",
-    "Image": null
+    ],
+    "propertyLocation": null
   }
 ]

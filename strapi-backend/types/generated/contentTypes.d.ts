@@ -396,6 +396,26 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
       'api::property.property'
     > &
       Schema.Attribute.Private;
+    Location: Schema.Attribute.Enumeration<
+      [
+        'Kuta, Bali',
+        'Seminyak, Bali',
+        'Ubud, Bali',
+        'Canggu, Bali',
+        'Denpasar, Bali',
+        'Sanur, Bali',
+        'Nusa Dua, Bali',
+        'Jimbaran, Bali',
+        'Uluwatu, Bali',
+        'Legian, Bali',
+        'Tabanan, Bali',
+        'Gianyar, Bali',
+        'Amed, Bali',
+        'Lovina, Bali',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Kuta, Bali'>;
     Price: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -403,6 +423,7 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    propertyLocation: Schema.Attribute.Component<'shared.location', false>;
     publishedAt: Schema.Attribute.DateTime;
     Slug: Schema.Attribute.String & Schema.Attribute.Unique;
     Title: Schema.Attribute.String;

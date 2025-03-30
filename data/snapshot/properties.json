@@ -1,33 +1,9 @@
 [
   {
-    "id": 3,
-    "attributes": {
-      "title": "Test-property",
-      "slug": "property-3",
-      "description": "Test-desc",
-      "status": "published",
-      "price": 0,
-      "property_type": "Property",
-      "location": "Unknown location",
-      "bedrooms": 0,
-      "bathrooms": 0,
-      "area": 0,
-      "createdAt": "2025-03-24T20:57:16.086Z",
-      "updatedAt": "2025-03-24T20:58:43.472Z",
-      "amenities": [],
-      "featured_image": "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg",
-      "images": [
-        "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg"
-      ],
-      "published_at": "2025-03-24T20:58:43.480Z",
-      "documentId": "vmg15py3a8lvndtf8ry48cof"
-    }
-  },
-  {
-    "id": 5,
+    "id": 9,
     "attributes": {
       "title": "Test-property-2",
-      "slug": "property-5",
+      "slug": "property-9",
       "description": "Test-desc-2",
       "status": "published",
       "price": 0,
@@ -37,12 +13,36 @@
       "bathrooms": 0,
       "area": 0,
       "createdAt": "2025-03-24T21:46:36.208Z",
-      "updatedAt": "2025-03-24T21:46:36.974Z",
+      "updatedAt": "2025-03-30T01:08:44.592Z",
       "amenities": [],
       "featured_image": null,
       "images": [],
-      "published_at": "2025-03-24T21:46:36.981Z",
+      "published_at": "2025-03-30T01:08:44.600Z",
       "documentId": "pg0dvlhh8g0raiw9xunbxny7"
+    }
+  },
+  {
+    "id": 10,
+    "attributes": {
+      "title": "Test-property",
+      "slug": "property-10",
+      "description": "Test-desc",
+      "status": "published",
+      "price": 0,
+      "property_type": "Property",
+      "location": "Seminyak, Bali",
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "area": 0,
+      "createdAt": "2025-03-24T20:57:16.086Z",
+      "updatedAt": "2025-03-30T04:06:08.450Z",
+      "amenities": [],
+      "featured_image": "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg",
+      "images": [
+        "http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_29_dfe68a32c5.jpeg"
+      ],
+      "published_at": "2025-03-30T04:06:08.460Z",
+      "documentId": "vmg15py3a8lvndtf8ry48cof"
     }
   }
 ]

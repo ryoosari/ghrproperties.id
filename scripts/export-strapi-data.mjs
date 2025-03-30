@@ -271,12 +271,37 @@ async function exportProperties(stats) {
     
     // Create property index file (with minimal data for listings)
     const propertyIndex = processedProperties.map(property => {
+      // Helper function to generate a slug from title if needed
+      const generateSlug = (text) => {
+        if (!text) return '';
+        return text
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, '-')           // Replace spaces with -
+          .replace(/&/g, '-and-')         // Replace & with 'and'
+          .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+          .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+          .replace(/^-+/, '')             // Trim - from start
+          .replace(/-+$/, '');            // Trim - from end
+      };
+      
+      // Get title and determine the correct slug
+      const title = property.Title || property.title || 'Untitled Property';
+      let slug = property.Slug || property.slug;
+      
+      // If no slug is available or it's using a default/generic format, generate one from the title
+      if (!slug || slug === 'property' || slug === `property-${property.id}`) {
+        slug = generateSlug(title);
+        console.log(`Generated slug for property index #${property.id}: "${title}" -> "${slug}"`);
+      }
+      
       // Extract just the essential fields for the index
       return {
         id: property.id,
         attributes: {
-          title: property.Title || property.title || 'Untitled Property',
-          slug: property.Slug || property.slug || `property-${property.id}`,
+          title: title,
+          slug: slug,
           status: property.Status || property.status || 'published',
           createdAt: property.createdAt,
           updatedAt: property.updatedAt,
@@ -385,14 +410,39 @@ async function createNormalizedSnapshot() {
     
     const propertiesData = JSON.parse(fs.readFileSync(propertiesPath, 'utf8'));
     
+    // Helper function to generate a slug from title if needed
+    const generateSlug = (text) => {
+      if (!text) return '';
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/&/g, '-and-')         // Replace & with 'and'
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start
+        .replace(/-+$/, '');            // Trim - from end
+    };
+    
     // Normalize the data structure to match what the components expect
     const normalizedProperties = propertiesData.map(property => {
+      // Determine the slug - use the one from Strapi if it exists, otherwise generate one
+      const title = property.Title || property.title || 'Untitled Property';
+      let slug = property.Slug || property.slug;
+      
+      // If no slug is available, generate one from the title
+      if (!slug || slug === 'property' || slug === `property-${property.id}`) {
+        slug = generateSlug(title);
+        console.log(`Generated slug for property #${property.id}: "${title}" -> "${slug}"`);
+      }
+      
       // Create a consistent property structure
       return {
         id: property.id,
         attributes: {
-          title: property.Title || property.title || 'Untitled Property',
-          slug: `property-${property.id}`,
+          title: title,
+          slug: slug,
           description: property.Description || property.description || '',
           status: property.Status || property.status || 'published',
           price: property.Price || property.price || 0,

@@ -2,7 +2,7 @@
   "id": 2,
   "attributes": {
     "title": "3BR Villa in Seminyak",
-    "slug": "property-2",
+    "slug": "3br-villa-in-seminyak",
     "description": "A beautiful villa in Seminyak. Premium, high quality.",
     "status": "published",
     "price": 3000000000,
@@ -24,6 +24,5 @@
     ],
     "published_at": "2025-03-30T14:05:54.764Z",
     "documentId": "yh2vg83yyvlsjbfhn50h0hlh"
-  },
-  "_note": "This file naming format is deprecated. Please use the slug-based filename format instead."
+  }
 }

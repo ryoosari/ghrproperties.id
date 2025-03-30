@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Image Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .image-container {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .image-container h2 {
+            margin-top: 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .url {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Property Image Test</h1>
+    <p>This page tests if the property images can be displayed directly in the browser.</p>
+    
+    <div class="image-container">
+        <h2>Original URL</h2>
+        <div class="url">/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
+        <img src="/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
+             alt="Property Image - Original" 
+             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with original URL</p>';"
+             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with original URL</p>';">
+    </div>
+    
+    <div class="image-container">
+        <h2>Relative URL with Strapi Prefix</h2>
+        <div class="url">http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
+        <img src="http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
+             alt="Property Image - With Prefix" 
+             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with Strapi prefix</p>';"
+             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with Strapi prefix</p>';">
+    </div>
+    
+    <div class="image-container">
+        <h2>Large Format URL</h2>
+        <div class="url">http://localhost:1337/uploads/large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
+        <img src="http://localhost:1337/uploads/large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
+             alt="Property Image - Large Format" 
+             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with large format URL</p>';"
+             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with large format URL</p>';">
+    </div>
+    
+    <div class="image-container">
+        <h2>Medium Format URL</h2>
+        <div class="url">http://localhost:1337/uploads/medium_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
+        <img src="http://localhost:1337/uploads/medium_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
+             alt="Property Image - Medium Format" 
+             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with medium format URL</p>';"
+             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with medium format URL</p>';">
+    </div>
+    
+    <div class="image-container">
+        <h2>Thumbnail Format URL</h2>
+        <div class="url">http://localhost:1337/uploads/thumbnail_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
+        <img src="http://localhost:1337/uploads/thumbnail_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
+             alt="Property Image - Thumbnail Format" 
+             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with thumbnail format URL</p>';"
+             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with thumbnail format URL</p>';">
+    </div>
+    
+    <script>
+        // Add a message about the test results
+        window.onload = function() {
+            const successElements = document.querySelectorAll('.success');
+            const errorElements = document.querySelectorAll('.error');
+            
+            const resultsDiv = document.createElement('div');
+            resultsDiv.innerHTML = `
+                <h2>Test Results</h2>
+                <p>Images loaded successfully: ${successElements.length}</p>
+                <p>Images failed to load: ${errorElements.length}</p>
+            `;
+            
+            document.body.appendChild(resultsDiv);
+        };
+    </script>
+</body>
+</html> 

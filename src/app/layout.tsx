@@ -39,6 +39,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Add the image converter script */}
+        <script src="/image-converter.js" defer></script>
+      </head>
       <body className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
         <ThemeProvider>
           {/* Use NoHydration for maximum protection against hydration errors */}

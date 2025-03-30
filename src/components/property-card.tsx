@@ -89,7 +89,7 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
   const slug = attrs.slug || property.Slug || property.slug || `property-${property.id}`;
   
   // Extract amenities from component structure or direct array
-  let amenities: string[] = [];
+  let amenities: any[] = [];
   
   // Handle amenities from attributes (normalized properties)
   if (attrs.Amenities && Array.isArray(attrs.Amenities)) {
@@ -142,9 +142,13 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
     ? amenities
         .slice()
         .sort((a, b) => {
+          // Handle both string and object formats
+          const nameA = typeof a === 'string' ? a : (a.amenityName || a.name || '');
+          const nameB = typeof b === 'string' ? b : (b.amenityName || b.name || '');
+          
           // Sort based on priority list
-          const indexA = priorityAmenities.indexOf(a);
-          const indexB = priorityAmenities.indexOf(b);
+          const indexA = priorityAmenities.indexOf(nameA);
+          const indexB = priorityAmenities.indexOf(nameB);
           
           // If both are in priority list, sort by their position in priority list
           if (indexA >= 0 && indexB >= 0) return indexA - indexB;
@@ -264,15 +268,20 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
           {/* Show important amenities if available */}
           {displayAmenities.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-              {displayAmenities.map((amenity: string, index: number) => {
-                const Icon = getAmenityIcon(amenity);
+              {displayAmenities.map((amenity: any, index: number) => {
+                // Handle both string and object formats
+                const amenityName = typeof amenity === 'string' 
+                  ? amenity 
+                  : (amenity.amenityName || amenity.name || 'Unnamed Amenity');
+                
+                const Icon = getAmenityIcon(amenityName);
                 return (
                   <div 
-                    key={`${amenity}-${index}`} 
+                    key={`${amenityName}-${index}`} 
                     className="bg-gray-100 text-gray-700 text-xs rounded-full px-3 py-1 flex items-center"
                   >
                     <Icon className="mr-1 text-primary" size={12} />
-                    <span>{amenity}</span>
+                    <span>{amenityName}</span>
                   </div>
                 );
               })}

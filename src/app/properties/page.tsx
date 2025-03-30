@@ -66,6 +66,13 @@ interface PropertyAttributes {
     width: number;
     height: number;
   }[];
+  bedrooms?: number;
+  bathrooms?: number;
+  area?: string | number;
+  property_type?: string;
+  amenities?: any[];
+  Amenities?: any[];
+  [key: string]: any; // Allow for other dynamic properties
 }
 
 interface NormalizedProperty {
@@ -203,13 +210,50 @@ export default async function PropertiesPage() {
   // Log normalized properties
   console.log('Normalized properties count:', normalizedProperties.length);
   
-  // Remove duplicates by slug
-  const uniqueSlugs = new Set();
-  const combinedProperties = normalizedProperties.filter(prop => {
+  // Remove duplicates by slug, preferring the most complete record
+  const uniquePropertyMap = new Map();
+  
+  // First pass: collect all properties by slug
+  normalizedProperties.forEach(prop => {
     const slug = prop.attributes?.slug;
-    if (!slug || uniqueSlugs.has(slug)) return false;
-    uniqueSlugs.add(slug);
-    return true;
+    if (!slug) return;
+    
+    if (!uniquePropertyMap.has(slug)) {
+      uniquePropertyMap.set(slug, []);
+    }
+    uniquePropertyMap.get(slug).push(prop);
+  });
+  
+  // Second pass: select the most complete property for each slug
+  const combinedProperties = Array.from(uniquePropertyMap.values()).map(propArray => {
+    // If only one property, use it
+    if (propArray.length === 1) return propArray[0];
+    
+    // Otherwise, score each property based on completeness
+    return propArray.reduce((best: NormalizedProperty, current: NormalizedProperty) => {
+      const bestAttrs = best.attributes || {};
+      const currentAttrs = current.attributes || {};
+      
+      // Calculate completeness score (higher is better)
+      const bestScore = 
+        (bestAttrs.bedrooms ? 2 : 0) + 
+        (bestAttrs.bathrooms ? 2 : 0) + 
+        ((bestAttrs.amenities?.length || 0) > 0 || (bestAttrs.Amenities?.length || 0) > 0 ? 3 : 0) +
+        (bestAttrs.featuredImage ? 1 : 0) +
+        ((bestAttrs.images?.length || 0) > 0 ? 1 : 0) +
+        (bestAttrs.description?.length > 20 ? 1 : 0);
+        
+      const currentScore = 
+        (currentAttrs.bedrooms ? 2 : 0) + 
+        (currentAttrs.bathrooms ? 2 : 0) + 
+        ((currentAttrs.amenities?.length || 0) > 0 || (currentAttrs.Amenities?.length || 0) > 0 ? 3 : 0) +
+        (currentAttrs.featuredImage ? 1 : 0) +
+        ((currentAttrs.images?.length || 0) > 0 ? 1 : 0) +
+        (currentAttrs.description?.length > 20 ? 1 : 0);
+      
+      // Choose the property with the higher completeness score
+      return currentScore > bestScore ? current : best;
+    }, propArray[0]);
   });
   
   // Log the final combined properties
@@ -218,7 +262,11 @@ export default async function PropertiesPage() {
     console.log('First combined property:', {
       id: combinedProperties[0].id,
       title: combinedProperties[0].attributes?.title,
-      hasAttributes: Boolean(combinedProperties[0].attributes)
+      hasAttributes: Boolean(combinedProperties[0].attributes),
+      bedrooms: combinedProperties[0].attributes?.bedrooms || 'none',
+      bathrooms: combinedProperties[0].attributes?.bathrooms || 'none',
+      hasAmenities: Boolean(combinedProperties[0].attributes?.amenities?.length > 0 || 
+                           combinedProperties[0].attributes?.Amenities?.length > 0)
     });
   }
   

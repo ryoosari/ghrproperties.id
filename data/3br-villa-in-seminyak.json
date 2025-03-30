@@ -1,10 +1,10 @@
 {
-  "id": 2,
+  "id": 3,
   "documentId": "yh2vg83yyvlsjbfhn50h0hlh",
   "Title": "3BR Villa in Seminyak",
   "createdAt": "2025-03-30T14:05:54.753Z",
-  "updatedAt": "2025-03-30T14:05:54.753Z",
-  "publishedAt": "2025-03-30T14:05:54.764Z",
+  "updatedAt": "2025-03-30T15:48:28.368Z",
+  "publishedAt": "2025-03-30T15:48:28.383Z",
   "Description": "A beautiful villa in Seminyak. Premium, high quality.",
   "IsFeatured": true,
   "Price": 3000000000,
@@ -367,7 +367,7 @@
     }
   ],
   "propertyLocation": {
-    "id": 2,
+    "id": 3,
     "address": "Jl Betaka I No.11A, Dalung, Kuta Utara, Badung, Bali 80361\n\n",
     "latitude": 115.16397136853867,
     "longitude": -8.620505150579072,
@@ -375,11 +375,11 @@
   },
   "Amenities": [
     {
-      "id": 3,
+      "id": 5,
       "amenityName": "Air Conditioning"
     },
     {
-      "id": 4,
+      "id": 6,
       "amenityName": "Kitchen"
     }
   ]

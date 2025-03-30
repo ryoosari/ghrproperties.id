@@ -24,6 +24,10 @@ const slugify = (text) => {
     .replace(/^-+/, '')             // Trim - from start
     .replace(/-+$/, '');            // Trim - from end
     
+  // Important fix for numerical prefixes like "3BR" - prevent extra hyphens
+  // Convert formats like "3-br" to "3br" to match expected format
+  slug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+    
   return slug;
 };
 

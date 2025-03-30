@@ -19,6 +19,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import qs from 'qs';
+import { execSync } from 'child_process';
 
 // Load environment variables
 dotenv.config();
@@ -39,7 +40,7 @@ const SNAPSHOT_DIR = path.join(DATA_DIR, 'snapshot');
  */
 function slugify(text) {
   if (!text) return '';
-  return text
+  let slug = text
     .toString()
     .toLowerCase()
     .trim()
@@ -49,6 +50,12 @@ function slugify(text) {
     .replace(/\-\-+/g, '-')         // Replace multiple - with single -
     .replace(/^-+/, '')             // Trim - from start
     .replace(/-+$/, '');            // Trim - from end
+    
+  // Critical fix for numerical prefixes - ensure "3BR" becomes "3br" not "3-br"
+  // This is essential for path matching in Next.js
+  slug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+  
+  return slug;
 }
 
 /**
@@ -62,6 +69,12 @@ function shouldUpdateSlug(property) {
   
   const slug = property.Slug || property.slug;
   const title = property.Title || property.title;
+  
+  // Check for numerical prefix with dash that needs to be fixed
+  if (slug && slug.match(/(\d+)-([a-z])/)) {
+    console.log(`Slug #${property.id} "${slug}" has a numerical prefix with dash that should be fixed`);
+    return true;
+  }
   
   // Generic slug that should be replaced
   if (slug === 'property' || slug === `property-${property.id}`) {
@@ -487,7 +500,7 @@ async function exportProperties(stats) {
       // Helper function to generate a slug from title if needed
       const generateSlug = (text) => {
         if (!text) return '';
-        return text
+        let slug = text
           .toString()
           .toLowerCase()
           .trim()
@@ -497,11 +510,31 @@ async function exportProperties(stats) {
           .replace(/\-\-+/g, '-')         // Replace multiple - with single -
           .replace(/^-+/, '')             // Trim - from start
           .replace(/-+$/, '');            // Trim - from end
+        
+        // Critical fix for numerical prefixes - ensure "3BR" becomes "3br" not "3-br"
+        // This is essential for path matching in Next.js
+        slug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+        
+        return slug;
       };
       
       // Get title and determine the correct slug
       const title = property.Title || property.title || 'Untitled Property';
       let slug = property.Slug || property.slug;
+      
+      // Apply fix for numerical prefixes to existing slugs
+      if (slug && slug.match(/(\d+)-([a-z])/)) {
+        const fixedSlug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+        console.log(`Fixed numerical prefix in slug for property index #${property.id}: "${slug}" -> "${fixedSlug}"`);
+        slug = fixedSlug;
+        
+        // Update the slug in the property data to ensure consistency
+        if (property.Slug !== undefined) {
+          property.Slug = slug;
+        } else if (property.slug !== undefined) {
+          property.slug = slug;
+        }
+      }
       
       // If no slug is available or it's using a default/generic format, generate one from the title
       if (!slug || slug === 'property' || slug === `property-${property.id}`) {
@@ -562,6 +595,20 @@ async function exportProperties(stats) {
       
       // Generate a slug from the title if needed
       let slug = property.Slug || property.slug;
+      
+      // Apply fix for numerical prefixes to existing slugs
+      if (slug && slug.match(/(\d+)-([a-z])/)) {
+        const fixedSlug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+        console.log(`Fixed numerical prefix in slug for property index #${property.id}: "${slug}" -> "${fixedSlug}"`);
+        slug = fixedSlug;
+        
+        // Update the slug in the property object
+        if (property.Slug !== undefined) {
+          property.Slug = slug;
+        } else if (property.slug !== undefined) {
+          property.slug = slug;
+        }
+      }
       
       // If there's no slug or it's the generic "property" slug, replace it with a generated one
       if (!slug || slug === 'property' || slug === `property-${property.id}`) {
@@ -662,7 +709,7 @@ async function createNormalizedSnapshot() {
     // Helper function to generate a slug from title if needed
     const generateSlug = (text) => {
       if (!text) return '';
-      return text
+      let slug = text
         .toString()
         .toLowerCase()
         .trim()
@@ -672,6 +719,12 @@ async function createNormalizedSnapshot() {
         .replace(/\-\-+/g, '-')         // Replace multiple - with single -
         .replace(/^-+/, '')             // Trim - from start
         .replace(/-+$/, '');            // Trim - from end
+      
+      // Critical fix for numerical prefixes - ensure "3BR" becomes "3br" not "3-br"
+      // This is essential for path matching in Next.js
+      slug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+      
+      return slug;
     };
     
     // Normalize the data structure to match what the components expect
@@ -680,10 +733,17 @@ async function createNormalizedSnapshot() {
       const title = property.Title || property.title || 'Untitled Property';
       let slug = property.Slug || property.slug;
       
+      // Apply fix for numerical prefixes to existing slugs
+      if (slug && slug.match(/(\d+)-([a-z])/)) {
+        const fixedSlug = slug.replace(/(\d+)-([a-z])/g, '$1$2');
+        console.log(`Fixed numerical prefix in normalized snapshot for property #${property.id}: "${slug}" -> "${fixedSlug}"`);
+        slug = fixedSlug;
+      }
+      
       // If no slug is available, generate one from the title
       if (!slug || slug === 'property' || slug === `property-${property.id}`) {
         slug = generateSlug(title);
-        console.log(`Generated slug for property #${property.id}: "${title}" -> "${slug}"`);
+        console.log(`Generated slug for normalized property #${property.id}: "${title}" -> "${slug}"`);
       }
       
       // Create a consistent property structure
@@ -1108,21 +1168,62 @@ function cleanupOldPropertyFiles() {
 // Execute the main function
 exportStrapiData()
   .then(() => {
-    // Check if we should auto-commit data changes
-    if (process.env.AUTO_COMMIT === 'true') {
-      console.log('\n🔄 Running auto-commit for data changes...');
-      
-      // Use dynamic import() for ESM/CommonJS compatibility
-      import('child_process').then(({ execSync }) => {
+    // Run the fix-property-slugs script to ensure consistent slugs
+    console.log('\n🔧 Running slug consistency fix...');
+    import('child_process').then(({ execSync }) => {
+      try {
+        execSync('node scripts/fix-property-slugs.js', { 
+          stdio: 'inherit' 
+        });
+        console.log('✅ Slug consistency fix completed');
+        
+        // Now update the property page to use local images
+        console.log('\n🔄 Updating property page to use local images...');
         try {
-          execSync('node scripts/auto-commit-data.js', { 
-            stdio: 'inherit' 
+          // Download property images first
+          console.log('Downloading property images...');
+          execSync('node scripts/download-images.js', {
+            stdio: 'inherit'
           });
+          
+          // Now update the property page component using the ES module wrapper
+          console.log('Updating property page component...');
+          
+          // Use a dynamic import with promise chaining
+          import('./fix-property-images.mjs')
+            .then(module => {
+              return module.fixPropertyImages();
+            })
+            .then(result => {
+              if (result) {
+                console.log('✅ Successfully updated property page to use local images');
+              } else {
+                console.error('❌ Failed to update property page to use local images');
+              }
+            })
+            .catch(error => {
+              console.error('Error updating property page:', error);
+            });
         } catch (error) {
-          console.error('Error running auto-commit script:', error);
+          console.error('Error updating property page:', error);
         }
-      });
-    }
+        
+        // Check if we should auto-commit data changes
+        if (process.env.AUTO_COMMIT === 'true') {
+          console.log('\n🔄 Running auto-commit for data changes...');
+          
+          try {
+            execSync('node scripts/auto-commit-data.js', { 
+              stdio: 'inherit' 
+            });
+          } catch (error) {
+            console.error('Error running auto-commit script:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error running slug fix script:', error);
+      }
+    });
   })
   .catch(error => {
     console.error('Unhandled error during export:', error);

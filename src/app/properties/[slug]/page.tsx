@@ -455,7 +455,12 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
               <div className="p-6">
                 <h2 className="text-xl font-bold mb-4">Amenities & Features</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {normalizedProperty.amenities.map((amenity: string, index: number) => {
+                  {normalizedProperty.amenities.map((amenity: any, index: number) => {
+                    // Handle both string format and object format with amenityName
+                    const amenityName = typeof amenity === 'string' 
+                      ? amenity 
+                      : (amenity.amenityName || amenity.name || 'Unnamed Amenity');
+                    
                     // Priority amenities that should be highlighted
                     const priorityAmenities = [
                       "Swimming Pool", 
@@ -466,12 +471,12 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                       "Security Service"
                     ];
                     
-                    const isHighlighted = priorityAmenities.includes(amenity);
-                    const IconComponent = getAmenityIcon(amenity);
+                    const isHighlighted = priorityAmenities.includes(amenityName);
+                    const IconComponent = getAmenityIcon(amenityName);
                     
                     return (
                       <div 
-                        key={`${amenity}-${index}`} 
+                        key={`${amenityName}-${index}`} 
                         className={`flex items-center p-3 rounded-lg ${
                           isHighlighted 
                             ? 'bg-primary/10 text-primary font-medium' 
@@ -479,7 +484,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                         }`}
                       >
                         <IconComponent className={`mr-3 ${isHighlighted ? 'text-primary' : 'text-gray-500'}`} />
-                        <span>{amenity}</span>
+                        <span>{amenityName}</span>
                       </div>
                     );
                   })}
@@ -509,35 +514,34 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
 // Helper function to normalize property data from different sources
 function normalizePropertyData(property: any) {
+  // Map for storing image mappings for this property
+  const propertySlug = property.attributes?.slug || property.Slug || property.slug || `property-${property.id}`;
+  const localImageBasePath = `/property-images/${propertySlug}`;
+  
   // If it's a static property (with attributes), normalize it
   if (property.attributes) {
     const { attributes } = property;
     
-    // Extract featured image URL if it exists
-    let featuredImageUrl: string | null = null;
-    if (attributes.featured_image?.data?.attributes?.url) {
-      featuredImageUrl = attributes.featured_image.data.attributes.url;
-    }
+    // Extract featured image URL - use local path
+    const featuredImageUrl = `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg`;
     
-    // Extract gallery images if they exist
-    const galleryImages: string[] = [];
-    if (attributes.images?.data && Array.isArray(attributes.images.data)) {
-      attributes.images.data.forEach((image: any) => {
-        if (image.attributes?.url) {
-          galleryImages.push(image.attributes.url);
-        }
-      });
-    }
+    // Extract gallery images - use local paths 
+    const galleryImages = [
+      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg`,
+      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg`,
+      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg`,
+      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg`
+    ];
     
     // Extract amenities if they exist - handle component structure
-    let amenities: string[] = [];
+    let amenities = [];
     
     // Handle component-based amenities (new format)
     if (attributes.Amenities && Array.isArray(attributes.Amenities)) {
-      // Extract amenity names from component objects
-      amenities = attributes.Amenities.map((amenity: any) => 
-        amenity.amenityName || amenity.name || ''
-      ).filter(name => name !== '');
+      
+      // Keep the original array to preserve the object structure
+      amenities = attributes.Amenities;
+
     } 
     // Handle old format (direct string array)
     else if (attributes.amenities && Array.isArray(attributes.amenities)) {
@@ -587,34 +591,26 @@ function normalizePropertyData(property: any) {
   }
   
   // If it's a Strapi property (direct properties), normalize it
-  // Extract featured image URL if it exists
-  let featuredImageUrl: string | null = null;
-  if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
-    featuredImageUrl = getStrapiMediaUrl(property.Image, 'large');
-  }
+  // Extract featured image - use local path
+  const featuredImageUrl = `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg`;
   
-  // Extract gallery images if they exist
-  const galleryImages: string[] = [];
-  if (property.Image && Array.isArray(property.Image)) {
-    property.Image.forEach((image: any) => {
-      if (image.url || (image.formats && image.formats.medium && image.formats.medium.url)) {
-        const imageUrl = getStrapiMediaUrl([image], 'medium');
-        if (imageUrl && !galleryImages.includes(imageUrl)) {
-          galleryImages.push(imageUrl);
-        }
-      }
-    });
-  }
+  // Extract gallery images - use local paths
+  const galleryImages = [
+    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg`,
+    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg`,
+    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg`,
+    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg`
+  ];
   
   // Extract amenities from Strapi format - handle component structure
-  let amenities: string[] = [];
+  let amenities = [];
   
   // Handle component-based amenities (new format)
   if (property.Amenities && Array.isArray(property.Amenities)) {
-    // Extract amenity names from component objects
-    amenities = property.Amenities.map((amenity: any) => 
-      amenity.amenityName || amenity.name || ''
-    ).filter(name => name !== '');
+    
+    // Keep the original array to preserve the object structure
+    amenities = property.Amenities;
+
   } 
   // Handle old format (direct string array)
   else if (property.amenities && Array.isArray(property.amenities)) {

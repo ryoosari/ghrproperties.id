@@ -12,7 +12,7 @@
   "Bathrooms": 3,
   "Area": 100,
   "PropertyType": "Villa",
-  "Slug": "3-br-villa-in-seminyak",
+  "Slug": "3br-villa-in-seminyak",
   "Location": "Kuta, Bali",
   "Image": [
     {
@@ -382,6 +382,5 @@
       "id": 6,
       "amenityName": "Kitchen"
     }
-  ],
-  "_note": "This ID-based filename is deprecated. Use the slug-based filename instead."
+  ]
 }

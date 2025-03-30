@@ -1,4 +1,3 @@
 {
-  "/properties/[slug]/page": "app/properties/[slug]/page.js",
-  "/properties/page": "app/properties/page.js"
+  "/properties/[slug]/page": "app/properties/[slug]/page.js"
 }

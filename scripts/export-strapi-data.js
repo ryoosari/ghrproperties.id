@@ -154,6 +154,21 @@ async function exportAllContent() {
 
 // Run the export
 exportAllContent()
+  .then(() => {
+    console.log('-----------------------------------');
+    console.log('🔧 Running slug consistency fix...');
+    // Run the fix-property-slugs script to ensure consistent slugs
+    try {
+      require('child_process').execSync('node scripts/fix-property-slugs.js', { 
+        stdio: 'inherit'
+      });
+      console.log('✅ Slug consistency fix completed');
+    } catch (error) {
+      console.error('Error running slug fix script:', error);
+    }
+    console.log('-----------------------------------');
+    console.log('✅ Export process complete!');
+  })
   .catch(error => {
     console.error('Export failed:', error);
     process.exit(1);

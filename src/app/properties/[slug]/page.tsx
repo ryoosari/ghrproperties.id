@@ -7,12 +7,21 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { FaArrowLeft, FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaRegHeart, 
          FaSwimmingPool, FaParking, FaWifi, FaUtensils, FaSnowflake, FaCheckCircle,
-         FaMap, FaMapMarkedAlt } from 'react-icons/fa';
+         FaMap, FaMapMarkedAlt, FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
 import dynamic from 'next/dynamic';
 import { formatPrice } from '@/lib/formatters';
 
 // Import the map component dynamically
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
+// Import image gallery component dynamically
+const PropertyImageGallery = dynamic(() => import('@/components/property/image-gallery'), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+      <div className="text-gray-400">Loading image gallery...</div>
+    </div>
+  )
+});
 
 // Remove dynamic mode
 // export const dynamic = 'force-dynamic';
@@ -284,41 +293,26 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
             </div>
             
             {/* Property Images */}
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold mb-4">Property Images</h2>
+            <div className="border-b">
+              {/* Dynamically loaded image gallery component */}
+              {normalizedProperty.featured_image && normalizedProperty.gallery_images && (
+                <PropertyImageGallery 
+                  featuredImage={normalizedProperty.featured_image}
+                  galleryImages={normalizedProperty.gallery_images}
+                  propertyTitle={normalizedProperty.title}
+                />
+              )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Featured Image */}
-                {normalizedProperty.featured_image && (
-                  <div className="md:col-span-2">
-                    <img 
-                      src={normalizedProperty.featured_image} 
-                      alt={normalizedProperty.title} 
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </div>
-                )}
-                
-                {/* Gallery Images */}
-                {normalizedProperty.gallery_images && 
-                 normalizedProperty.gallery_images.map((image: string, index: number) => (
-                  <div key={index}>
-                    <img 
-                      src={image} 
-                      alt={`${normalizedProperty.title} - Image ${index + 1}`} 
-                      className="w-full h-64 object-cover rounded-lg"
-                    />
-                  </div>
-                ))}
-                
-                {/* Show placeholder if no images */}
-                {(!normalizedProperty.featured_image && 
-                  (!normalizedProperty.gallery_images || normalizedProperty.gallery_images.length === 0)) && (
-                  <div className="md:col-span-2 bg-gray-100 h-64 flex items-center justify-center rounded-lg">
+              {/* Show placeholder if no images */}
+              {(!normalizedProperty.featured_image && 
+                (!normalizedProperty.gallery_images || normalizedProperty.gallery_images.length === 0)) && (
+                <div className="p-6">
+                  <h2 className="text-xl font-bold mb-4">Property Images</h2>
+                  <div className="bg-gray-100 h-64 flex items-center justify-center rounded-lg">
                     <span className="text-gray-400">No images available</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             
             {/* Property Description */}

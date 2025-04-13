@@ -36,7 +36,8 @@
     },
     "Price": {
       "type": "integer",
-      "min": 0
+      "min": 0,
+      "description": "Property price"
     },
     "Bedrooms": {
       "type": "integer",
@@ -56,8 +57,14 @@
       "type": "integer",
       "min": 0,
       "default": 0,
-      "description": "Size of the property in square meters",
+      "description": "Size of the property in square meters (includes both building and land area)",
       "required": true
+    },
+    "LandSize": {
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "description": "Size of the land in square meters (excluding building area)"
     },
     "PropertyType": {
       "type": "enumeration",
@@ -114,6 +121,94 @@
       "required": true,
       "min": 1,
       "description": "Select multiple amenities for this property"
+    },
+    "YearBuilt": {
+      "type": "integer",
+      "description": "The year the property was constructed"
+    },
+    "Furnishing": {
+      "type": "enumeration",
+      "enum": [
+        "Fully Furnished",
+        "Semi-Furnished",
+        "Unfurnished"
+      ],
+      "default": "Fully Furnished",
+      "description": "The furnishing status of the property"
+    },
+    "View": {
+      "type": "string",
+      "description": "What can be seen from the property (e.g., Ocean View, Garden View)"
+    },
+    "LocationHighlights": {
+      "type": "text",
+      "description": "Notable highlights about the property's location"
+    },
+    "DesignStyle": {
+      "type": "string",
+      "description": "Architectural style or design features of the property"
+    },
+    "Connectivity": {
+      "type": "text",
+      "description": "Internet and connectivity options available"
+    },
+    "EnergyFeatures": {
+      "type": "text",
+      "description": "Energy-saving or sustainable features of the property"
+    },
+    "SecurityFeatures": {
+      "type": "text",
+      "description": "Security systems and features of the property"
+    },
+    "OutdoorFeatures": {
+      "type": "text",
+      "description": "Details about gardens, balconies, or outdoor areas"
+    },
+    "SpecialFeatures": {
+      "type": "richtext",
+      "description": "Unique or special features that make this property stand out"
+    },
+    "VideoURL": {
+      "type": "string",
+      "description": "URL link to a video tour of the property"
+    },
+    "Neighborhood": {
+      "type": "string",
+      "description": "Information about the neighborhood surrounding the property"
+    },
+    "Availability": {
+      "type": "enumeration",
+      "enum": [
+        "Available Now",
+        "Coming Soon",
+        "Under Contract",
+        "Sold"
+      ],
+      "default": "Available Now",
+      "description": "Current availability status of the property"
+    },
+    "Kitchens": {
+      "type": "integer",
+      "min": 0,
+      "default": 1,
+      "description": "Number of kitchens in the property"
+    },
+    "LivingRooms": {
+      "type": "integer",
+      "min": 0,
+      "default": 1,
+      "description": "Number of living rooms in the property"
+    },
+    "Status": {
+      "type": "enumeration",
+      "enum": [
+        "For Sale",
+        "For Rent",
+        "Sold",
+        "Rented"
+      ],
+      "default": "For Sale",
+      "description": "Current status of the property"
     }
   }
 }

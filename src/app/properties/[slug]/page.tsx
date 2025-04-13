@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getPropertyBySlug as getStaticPropertyBySlug, getAllProperties } from '@/utils/snapshot';
-import { getPropertyBySlug as getStrapiPropertyBySlug, getStrapiMediaUrl, getProperties } from '@/lib/strapi';
+import { getPropertyBySlug as getStrapiPropertyBySlug, getStrapiMediaUrl } from '@/lib/strapi';
 import { notFound } from 'next/navigation';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
@@ -10,18 +10,15 @@ import { FaArrowLeft, FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaRegHeart,
          FaMap, FaMapMarkedAlt, FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
 import dynamic from 'next/dynamic';
 import { formatPrice } from '@/lib/formatters';
+import { FaCalendarAlt, FaHeart, FaEnvelope, FaPhone } from 'react-icons/fa';
+import { AiOutlineShareAlt } from 'react-icons/ai';
+import CopyLinkButton from '@/components/CopyLinkButton';
+import SaveButton from '@/components/SaveButton';
+import PrintButton from '@/components/PrintButton';
+import PropertyGallerySection from '@/components/PropertyGallerySection';
 
 // Import the map component dynamically
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
-// Import image gallery component dynamically
-const PropertyImageGallery = dynamic(() => import('@/components/property/image-gallery'), { 
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[500px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-      <div className="text-gray-400">Loading image gallery...</div>
-    </div>
-  )
-});
 
 // Remove dynamic mode
 // export const dynamic = 'force-dynamic';
@@ -95,6 +92,8 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
         
         // Try falling back to the API directly
         try {
+          // Import getProperties from correct location
+          const { getProperties } = require('@/lib/strapi');
           const result = await getProperties();
           if (result && 'data' in result && Array.isArray(result.data)) {
             const strapiSlugs = result.data
@@ -267,12 +266,9 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <div className="text-2xl font-bold text-primary mr-4">
+                  <div className="text-2xl font-bold text-primary">
                     {formatPrice(normalizedProperty.price)}
                   </div>
-                  <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-                    <FaRegHeart className="text-gray-500 text-xl" />
-                  </button>
                 </div>
               </div>
               
@@ -290,87 +286,291 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   {normalizedProperty.property_type}
                 </div>
               </div>
+
+              {/* Share Property Options */}
+              <div className="mt-6 flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t">
+                <div className="mb-4 sm:mb-0">
+                  <p className="text-sm text-gray-600 mb-2">Share this property:</p>
+                  <div className="flex space-x-3">
+                    <a 
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd"></path>
+                      </svg>
+                    </a>
+                    <a 
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this property: ${normalizedProperty.title}`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+                      </svg>
+                    </a>
+                    <a 
+                      href={`https://wa.me/?text=${encodeURIComponent(`Check out this property: ${normalizedProperty.title} ${typeof window !== 'undefined' ? window.location.href : ''}`)}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fillRule="evenodd" d="M21.105 4.603C18.928 2.359 15.9 1.074 12.7 1.074c-6.75 0-12.25 5.5-12.25 12.25 0 2.177.567 4.293 1.633 6.156L1 24.074l4.763-1.237c1.788.974 3.81 1.487 5.867 1.487h.004c6.75 0 12.25-5.5 12.25-12.25 0-3.232-1.283-6.266-3.53-8.422zm-8.406 18.806h-.004c-1.828 0-3.623-.493-5.187-1.42l-.375-.22-3.83 1.008.958-3.55-.233-.384c-1.03-1.638-1.575-3.535-1.575-5.5 0-5.894 4.807-10.613 10.638-10.613 2.812 0 5.453 1.086 7.43 3.05 1.998 1.986 3.096 4.624 3.096 7.428 0 5.894-4.75 10.613-10.625 10.613l-.008-.004z" clipRule="evenodd"></path>
+                        <path fillRule="evenodd" d="M12.6 5.074c-5.144 0-9.137 4.125-9.137 9.275 0 2.032.662 3.995 1.905 5.629l.294.456-.832 3.022 3.109-.807.44.26c1.544.906 3.29 1.382 5.066 1.382h.005c5.137 0 9.13-4.125 9.13-9.276s-4.3-9.275-9.138-9.275h-.005zm4.882 11.806c-.244.117-1.4.688-1.618.75-.216.075-.375.1-.531-.075-.156-.165-.619-.63-1.188-1.163-.438-.413-.731-.55-.894-.462-.162.087-.162.637-.162.637s-.244 1.01-.35 1.135c-.106.124-.22.143-.406.05-.188-.1-.788-.281-1.5-.9-.557-.482-.931-1.081-1.038-1.259-.106-.182-.012-.275.081-.363.081-.081.187-.212.281-.318.094-.106.125-.181.187-.3.063-.124.032-.23-.015-.322-.05-.093-.532-1.232-.713-1.69-.182-.45-.369-.382-.5-.381-.131.006-.282.006-.425.006-.15 0-.394.06-.6.293-.207.232-.787.756-.787 1.845 0 1.088.813 2.138.925 2.288.112.15 1.582 2.362 3.832 3.312.532.224.95.359 1.275.457.536.169 1.025.144 1.413.088.431-.065 1.326-.53 1.52-1.041.187-.512.187-.951.131-1.043-.056-.093-.206-.144-.438-.238l.003-.003z" clipRule="evenodd"></path>
+                      </svg>
+                    </a>
+                    <a 
+                      href={`mailto:?subject=${encodeURIComponent(`Property Listing: ${normalizedProperty.title}`)}&body=${encodeURIComponent(`Check out this property: ${normalizedProperty.title} ${typeof window !== 'undefined' ? window.location.href : ''}`)}`} 
+                      className="p-2 rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      </svg>
+                    </a>
+                    <CopyLinkButton />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <PrintButton />
+                  <SaveButton />
+                </div>
+              </div>
             </div>
             
             {/* Property Images */}
-            <div className="border-b">
-              {/* Dynamically loaded image gallery component */}
-              {normalizedProperty.featured_image && normalizedProperty.gallery_images && (
-                <PropertyImageGallery 
-                  featuredImage={normalizedProperty.featured_image}
-                  galleryImages={normalizedProperty.gallery_images}
-                  propertyTitle={normalizedProperty.title}
-                />
-              )}
-              
-              {/* Show placeholder if no images */}
-              {(!normalizedProperty.featured_image && 
-                (!normalizedProperty.gallery_images || normalizedProperty.gallery_images.length === 0)) && (
-                <div className="p-6">
-                  <h2 className="text-xl font-bold mb-4">Property Images</h2>
-                  <div className="bg-gray-100 h-64 flex items-center justify-center rounded-lg">
-                    <span className="text-gray-400">No images available</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            <PropertyGallerySection 
+              featuredImage={normalizedProperty.featured_image}
+              galleryImages={normalizedProperty.gallery_images}
+              propertyTitle={normalizedProperty.title}
+            />
             
             {/* Property Description */}
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold mb-4">Description</h2>
-              <div className="prose max-w-none">
-                <p>{normalizedProperty.description || 'No description available.'}</p>
+            <div className="p-8 border-b">
+              <h2 className="text-xl font-bold mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                Description
+              </h2>
+              <div className="prose max-w-none text-gray-700 leading-relaxed">
+                {normalizedProperty.description ? (
+                  <>
+                    {normalizedProperty.description.split('\n').map((paragraph: string, index: number) => (
+                      <p key={index} className="mb-4">{paragraph}</p>
+                    ))}
+                  </>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                    <p className="text-gray-500">No detailed description provided for this property.</p>
+                    <p className="text-sm text-gray-400 mt-2">Contact us for more information.</p>
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Property Details */}
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold mb-4">Property Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-3 text-primary">Basic Information</h3>
-                  <ul className="space-y-3">
-                    <li className="flex">
-                      <span className="font-medium w-32">Property ID:</span> 
-                      <span className="text-gray-600">{normalizedProperty.id}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Property Type:</span> 
-                      <span className="text-gray-600">{normalizedProperty.property_type}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Status:</span> 
-                      <span className="text-gray-600">{normalizedProperty.status}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Area:</span> 
-                      <span className="text-gray-600">{normalizedProperty.area} m²</span>
-                    </li>
-                  </ul>
+            {/* Property Video Tour (if available) */}
+            <div className="p-8 border-b bg-gray-50">
+              <h2 className="text-xl font-bold mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+                Property Video Tour
+              </h2>
+              {normalizedProperty.video_url ? (
+                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-lg">
+                  <iframe 
+                    src={normalizedProperty.video_url}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                    loading="lazy"
+                    title={`${normalizedProperty.title} video tour`}
+                  ></iframe>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-3 text-primary">Rooms</h3>
-                  <ul className="space-y-3">
-                    <li className="flex">
-                      <span className="font-medium w-32">Bedrooms:</span> 
-                      <span className="text-gray-600">{normalizedProperty.bedrooms}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Bathrooms:</span> 
-                      <span className="text-gray-600">{normalizedProperty.bathrooms}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Kitchen:</span> 
-                      <span className="text-gray-600">{normalizedProperty.kitchen || 1}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32">Living Room:</span> 
-                      <span className="text-gray-600">{normalizedProperty.living_room || 1}</span>
-                    </li>
-                  </ul>
+              ) : (
+                <div className="bg-white rounded-lg p-8 text-center border border-gray-200 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">Video tour not available</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">Contact our team to schedule a personal viewing or request a live video tour of this property.</p>
+                  <Link 
+                    href="/contact" 
+                    className="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    Request a Tour
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </div>
+            
+            {/* Property Details - Expanded */}
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Property Details
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow mb-6">
+                    <h3 className="font-semibold mb-4 text-primary flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Basic Information
+                    </h3>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Property ID:</span> 
+                        <span className="text-gray-800">{normalizedProperty.id}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Property Type:</span> 
+                        <span className="text-gray-800">{normalizedProperty.property_type}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Status:</span> 
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-sm">{normalizedProperty.status}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Year Built:</span> 
+                        <span className="text-gray-800">{normalizedProperty.year_built || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Availability:</span> 
+                        <span className="text-gray-800">{normalizedProperty.availability}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold mb-4 text-primary flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                      </svg>
+                      Size & Layout
+                    </h3>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Building Area:</span> 
+                        <span className="text-gray-800">{normalizedProperty.area} m²</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Land Size:</span> 
+                        <span className="text-gray-800">{normalizedProperty.land_size} m²</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Bedrooms:</span> 
+                        <span className="text-gray-800 flex items-center">
+                          <FaBed className="text-primary mr-1" />
+                          {normalizedProperty.bedrooms}
+                        </span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Bathrooms:</span> 
+                        <span className="text-gray-800 flex items-center">
+                          <FaBath className="text-primary mr-1" />
+                          {normalizedProperty.bathrooms}
+                        </span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Kitchen:</span> 
+                        <span className="text-gray-800">{normalizedProperty.kitchen || 1}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Living Room:</span> 
+                        <span className="text-gray-800">{normalizedProperty.living_room || 1}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow mb-6">
+                    <h3 className="font-semibold mb-4 text-primary flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      Features & Specifications
+                    </h3>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Furnishing:</span> 
+                        <span className="text-gray-800">{normalizedProperty.furnishing || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">View:</span> 
+                        <span className="text-gray-800">{normalizedProperty.view || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Design Style:</span> 
+                        <span className="text-gray-800">{normalizedProperty.design_style || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Connectivity:</span> 
+                        <span className="text-gray-800">{normalizedProperty.connectivity || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Energy Features:</span> 
+                        <span className="text-gray-800">{normalizedProperty.energy_features || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Security:</span> 
+                        <span className="text-gray-800">{normalizedProperty.security_features || 'Not specified'}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold mb-4 text-primary flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Location Features
+                    </h3>
+                    <ul className="space-y-3 text-gray-700">
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Address:</span> 
+                        <span className="text-gray-800">{normalizedProperty.address || 'Contact agent for details'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Neighborhood:</span> 
+                        <span className="text-gray-800">{normalizedProperty.neighborhood || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Location Highlights:</span> 
+                        <span className="text-gray-800">{normalizedProperty.location_highlights || 'Not specified'}</span>
+                      </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Outdoor Features:</span> 
+                        <span className="text-gray-800">{normalizedProperty.outdoor_features || 'Not specified'}</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
+
+              {normalizedProperty.special_features && (
+                <div className="mt-6 bg-primary/5 p-4 rounded-lg">
+                  <h3 className="font-medium text-primary mb-2">Special Features</h3>
+                  <p className="text-gray-700">{normalizedProperty.special_features}</p>
+                </div>
+              )}
             </div>
+            
+            {/* Nearby Attractions - REMOVED */}
+            
+            {/* Property Highlights - REMOVED */}
             
             {/* Property Location Map */}
             <div className="p-6 border-b">
@@ -401,7 +601,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 {normalizedProperty.latitude && normalizedProperty.longitude ? (
                   <div className="flex items-center mt-2 text-green-600 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1">
-                      <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.414-1.414l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                     </svg>
                     <span>Exact coordinates available</span>
                   </div>
@@ -444,58 +644,175 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
               </div>
             </div>
             
-            {/* Amenities */}
+            {/* Amenities & Features */}
             {normalizedProperty.amenities && normalizedProperty.amenities.length > 0 && (
-              <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">Amenities & Features</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-bold mb-6 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  Amenities & Features
+                </h2>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {normalizedProperty.amenities.map((amenity: any, index: number) => {
-                    // Handle both string format and object format with amenityName
-                    const amenityName = typeof amenity === 'string' 
-                      ? amenity 
-                      : (amenity.amenityName || amenity.name || 'Unnamed Amenity');
+                    // Handle all possible formats for amenity name
+                    const amenityName = typeof amenity === 'object' 
+                      ? (amenity.amenityName || amenity.name || amenity.Name || '') 
+                      : amenity;
                     
-                    // Priority amenities that should be highlighted
-                    const priorityAmenities = [
-                      "Swimming Pool", 
-                      "Private Pool", 
-                      "Ocean View", 
-                      "Beach Access", 
-                      "Rice Field View",
-                      "Security Service"
-                    ];
-                    
-                    const isHighlighted = priorityAmenities.includes(amenityName);
-                    const IconComponent = getAmenityIcon(amenityName);
+                    if (!amenityName) return null;
                     
                     return (
                       <div 
-                        key={`${amenityName}-${index}`} 
-                        className={`flex items-center p-3 rounded-lg ${
-                          isHighlighted 
-                            ? 'bg-primary/10 text-primary font-medium' 
-                            : 'bg-gray-50 text-gray-700'
-                        }`}
+                        key={index} 
+                        className="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow"
                       >
-                        <IconComponent className={`mr-3 ${isHighlighted ? 'text-primary' : 'text-gray-500'}`} />
-                        <span>{amenityName}</span>
+                        <div className="mr-3 text-primary">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-800">{amenityName}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+            
+            {/* Property Documents */}
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                </svg>
+                Property Documents
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors flex items-center">
+                  <div className="bg-primary/10 p-3 rounded-full text-primary mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Property Brochure</h3>
+                    <p className="text-sm text-gray-600">PDF • 2.3MB</p>
+                    <Link 
+                      href="#"
+                      className="text-primary text-sm hover:underline inline-flex items-center mt-1"
+                    >
+                      Download
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors flex items-center">
+                  <div className="bg-primary/10 p-3 rounded-full text-primary mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Floor Plan</h3>
+                    <p className="text-sm text-gray-600">PDF • 1.5MB</p>
+                    <Link 
+                      href="#"
+                      className="text-primary text-sm hover:underline inline-flex items-center mt-1"
+                    >
+                      Download
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-gray-500">
+                For additional documents and information, please contact our agents directly.
+              </p>
+            </div>
           </div>
           
           {/* Contact Agent Section */}
           <div className="mt-8 bg-primary/10 p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Interested in this property?</h2>
             <p className="mb-4">Contact our agents for more information or to schedule a viewing.</p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link 
+                href={`/contact?property=${normalizedProperty.slug}&propertyName=${encodeURIComponent(normalizedProperty.title)}`}
+                className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.414L11 9.586V3a1 1 0 112 0v4.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                Request a Viewing
+              </Link>
+              <Link 
+                href="/contact" 
+                className="inline-flex items-center justify-center bg-white border-2 border-primary hover:bg-primary/5 text-primary px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 3a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V3zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+                Contact Agent
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Similar Properties Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container">
+          <h2 className="text-2xl font-bold mb-8 text-center">Similar Properties You May Like</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* This would ideally be populated with actual similar properties from your database */}
+            {/* I'm showing static placeholders for demonstration */}
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+                <div className="relative h-56 bg-gray-100 overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9 bg-gray-200 animate-pulse" />
+                  <div className="absolute top-3 left-3">
+                    <span className="bg-primary text-white text-xs font-medium px-2 py-1 rounded-md">
+                      Similar
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="font-bold text-xl truncate mb-2">Similar Property {item}</h3>
+                  <p className="text-gray-600 text-sm mb-4 flex items-center">
+                    <FaMapMarkerAlt className="text-primary mr-2" size={14} />
+                    Similar Location
+                  </p>
+                  <div className="flex items-center justify-between mt-6">
+                    <p className="text-primary font-bold">Contact for Price</p>
+                    <Link 
+                      href="/properties" 
+                      className="text-sm font-medium text-primary hover:text-primary-dark transition-colors flex items-center"
+                    >
+                      View Details 
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
             <Link 
-              href="/contact" 
-              className="inline-block bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              href="/properties" 
+              className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
             >
-              Contact Us
+              View All Properties
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </Link>
           </div>
         </div>
@@ -562,21 +879,35 @@ function normalizePropertyData(property: any) {
 
     return {
       id: property.id,
-      title: attributes.title || 'Unnamed Property',
-      description: attributes.description || '',
-      location: attributes.location || 'Location not specified',
-      price: attributes.price || 0,
-      bedrooms: attributes.bedrooms || 0,
-      bathrooms: attributes.bathrooms || 0,
-      area: attributes.Area || attributes.square_footage || attributes.area || 'N/A',
+      title: attributes.title || attributes.Title || 'Unnamed Property',
+      description: attributes.description || attributes.Description || '',
+      location: attributes.location || attributes.Location || 'Location not specified',
+      price: attributes.price || attributes.Price || 0,
+      bedrooms: attributes.bedrooms || attributes.Bedrooms || 0,
+      bathrooms: attributes.bathrooms || attributes.Bathrooms || 0,
+      area: attributes.Area || attributes.area || 'N/A',
+      land_size: attributes.LandSize || attributes.land_size || attributes.Area || 0,
       property_type: attributes.PropertyType || attributes.property_type || 'Property',
-      status: attributes.status || 'unlisted',
-      kitchen: attributes.kitchen || 1,
-      living_room: attributes.living_room || 1,
+      status: attributes.Status || attributes.status || 'unlisted',
+      year_built: attributes.YearBuilt || attributes.year_built || null,
+      furnishing: attributes.Furnishing || attributes.furnishing || null,
+      view: attributes.View || attributes.view || null,
+      location_highlights: attributes.LocationHighlights || attributes.location_highlights || null,
+      design_style: attributes.DesignStyle || attributes.design_style || null,
+      connectivity: attributes.Connectivity || attributes.connectivity || null,
+      energy_features: attributes.EnergyFeatures || attributes.energy_features || null,
+      security_features: attributes.SecurityFeatures || attributes.security_features || null,
+      outdoor_features: attributes.OutdoorFeatures || attributes.outdoor_features || null,
+      special_features: attributes.SpecialFeatures || attributes.special_features || null,
+      video_url: attributes.VideoURL || attributes.video_url || null,
+      neighborhood: attributes.Neighborhood || attributes.neighborhood || null,
+      availability: attributes.Availability || attributes.availability || 'Available Now',
+      kitchen: attributes.Kitchens || attributes.kitchen || 1,
+      living_room: attributes.LivingRooms || attributes.living_room || 1,
       featured_image: featuredImageUrl,
       gallery_images: galleryImages,
       amenities: amenities,
-      slug: attributes.slug,
+      slug: attributes.slug || attributes.Slug,
       // Add location details
       address: address,
       latitude: latitude,
@@ -637,11 +968,25 @@ function normalizePropertyData(property: any) {
     price: property.Price || 0,
     bedrooms: property.Bedrooms || 0,
     bathrooms: property.Bathrooms || 0,
-    area: property.Area || property.square_footage || 'N/A',
+    area: property.Area || 'N/A',
+    land_size: property.LandSize || property.land_size || property.Area || 0,
     property_type: property.PropertyType || 'Property',
     status: property.Status || 'unlisted',
-    kitchen: property.Kitchen || 1,
-    living_room: property.LivingRoom || 1,
+    year_built: property.YearBuilt || property.year_built || null,
+    furnishing: property.Furnishing || property.furnishing || null,
+    view: property.View || property.view || null,
+    location_highlights: property.LocationHighlights || property.location_highlights || null,
+    design_style: property.DesignStyle || property.design_style || null,
+    connectivity: property.Connectivity || property.connectivity || null, 
+    energy_features: property.EnergyFeatures || property.energy_features || null,
+    security_features: property.SecurityFeatures || property.security_features || null,
+    outdoor_features: property.OutdoorFeatures || property.outdoor_features || null,
+    special_features: property.SpecialFeatures || property.special_features || null,
+    video_url: property.VideoURL || property.video_url || null,
+    neighborhood: property.Neighborhood || property.neighborhood || null,
+    availability: property.Availability || property.availability || 'Available Now',
+    kitchen: property.Kitchens || property.kitchen || 1,
+    living_room: property.LivingRooms || property.living_room || 1,
     featured_image: featuredImageUrl,
     gallery_images: galleryImages,
     amenities: amenities,

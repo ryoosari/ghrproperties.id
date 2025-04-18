@@ -2,6 +2,8 @@
  * Utility functions for formatting different types of data
  */
 
+import { getStrapiMediaUrl as getStrapiMediaUrlOriginal } from '@/lib/strapi';
+
 /**
  * Format a number as a currency with the specified locale and currency code
  */
@@ -40,18 +42,5 @@ export function truncateText(text: string, maxLength: number = 100): string {
   return text.substring(0, maxLength).trim() + '...';
 }
 
-/**
- * Convert a Strapi media URL to a full URL
- */
-export function getStrapiMediaUrl(url: string): string {
-  if (!url) return '';
-  
-  // Check if the URL is already absolute
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  
-  // Otherwise, prepend the Strapi URL
-  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
-  return `${strapiUrl}${url}`;
-} 
+// Re-export the getStrapiMediaUrl function from lib/strapi.js
+export const getStrapiMediaUrl = getStrapiMediaUrlOriginal; 

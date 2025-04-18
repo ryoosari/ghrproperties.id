@@ -10,6 +10,8 @@ import QuickFilters from '@/components/quick-filters';
 import AdvancedFilters from '@/components/advanced-filters';
 import path from 'path';
 import fs from 'fs';
+import type { Metadata } from 'next';
+import { normalizeProperty } from '@/lib/property-normalizer';
 
 // Define types for our property structures
 interface StrapiImage {
@@ -43,6 +45,7 @@ interface StrapiProperty {
   updatedAt: string;
   publishedAt?: string;
   Image?: StrapiImage[];
+  MainImage?: StrapiImage;
 }
 
 interface PropertyAttributes {
@@ -84,44 +87,54 @@ interface NormalizedProperty {
 // export const dynamic = 'force-dynamic';
 export const revalidate = 60; // Revalidate every 60 seconds
 
+// Set metadata for the page
+export const metadata: Metadata = {
+  title: 'Properties | GHR Properties',
+  description: 'Browse our curated selection of premium properties available for sale and rent across Bali, Indonesia.',
+};
+
 export default async function PropertiesPage() {
-  // Get properties from both sources
+  // Get all properties from snapshot and Strapi
+  
+  // First try snapshot properties (static)
   let snapshotProperties: any[] = [];
   try {
-    console.log('Attempting to load properties from snapshot...');
     snapshotProperties = getAllProperties({
-      status: 'published',
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
+      status: 'published'
     });
-    console.log(`Loaded ${snapshotProperties.length} properties from snapshot`);
+    console.log(`Loaded ${snapshotProperties.length} snapshot properties`);
   } catch (error) {
     console.error('Error loading snapshot properties:', error);
-    // Ensure we have at least an empty array
-    snapshotProperties = [];
   }
   
-  // Fetch Strapi properties at build time
+  // Then try to get Strapi properties
   let strapiProperties: StrapiProperty[] = [];
   
-  // Check if we're running in a static export or production build
+  // Check if we're in a static export build
   if (process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
-    // Try to load from pre-exported data
+    // Try to load from pre-exported data for static export
     try {
       const dataPath = path.join(process.cwd(), 'data', 'processed-properties.json');
       if (fs.existsSync(dataPath)) {
         const processedData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-        strapiProperties = processedData || [];
-        console.log(`Loaded ${strapiProperties.length} properties from exported data`);
+        if (Array.isArray(processedData)) {
+          strapiProperties = processedData;
+          console.log(`Loaded ${strapiProperties.length} Strapi properties from pre-exported data`);
+        } else {
+          console.error('Processed properties is not an array, type:', typeof processedData);
+        }
+      } else {
+        console.log('No processed-properties.json file found');
       }
     } catch (error) {
       console.error('Error loading pre-exported Strapi properties:', error);
     }
   } else {
-    // Fetch from Strapi API directly for dynamic builds
+    // Fetch from API directly for dynamic build
     try {
       const result = await getProperties();
-      // Check if result has data property and it's an array
+      
+      // Check if result has the expected format
       if (result && typeof result === 'object' && 'data' in result && Array.isArray(result.data)) {
         strapiProperties = result.data;
         console.log('Loaded Strapi properties successfully:', strapiProperties.length);
@@ -142,54 +155,11 @@ export default async function PropertiesPage() {
     }
   }
   
-  // Normalize all properties to have consistent structure
+  // Normalize all properties to have consistent structure using the utility
   const normalizedProperties: NormalizedProperty[] = [
-    ...strapiProperties.map((prop: StrapiProperty) => {
-      // The Strapi properties have the fields directly on the object, not nested in attributes
-      const normalized = {
-        id: prop.id,
-        attributes: {
-          title: prop.Title || 'Untitled Property',
-          // Use the slug from Strapi with fallback to property-id format
-          slug: prop.Slug || `property-${prop.id}`,
-          status: 'published', // Default to published
-          price: prop.Price || 0,
-          location: prop.Location || '',
-          description: prop.Description || '',
-          createdAt: prop.createdAt || new Date().toISOString(),
-          updatedAt: prop.updatedAt || new Date().toISOString(),
-          // Handle images
-          featuredImage: prop.Image && prop.Image.length > 0 ? {
-            url: prop.Image[0].url || '',
-            alternativeText: prop.Image[0].alternativeText || prop.Title || '',
-            width: prop.Image[0].width || 800,
-            height: prop.Image[0].height || 600
-          } : null,
-          images: prop.Image && Array.isArray(prop.Image) ? 
-            prop.Image.map((img: StrapiImage) => ({
-              url: img.url || '',
-              alternativeText: img.alternativeText || prop.Title || '',
-              width: img.width || 800,
-              height: img.height || 600
-            })) : []
-        }
-      };
-      
-      // Log the first normalized property for debugging
-      if (prop.id === strapiProperties[0]?.id) {
-        console.log('Normalized first Strapi property:', {
-          id: normalized.id,
-          title: normalized.attributes.title,
-          price: normalized.attributes.price,
-          slug: normalized.attributes.slug,
-          hasFeaturedImage: Boolean(normalized.attributes.featuredImage)
-        });
-      }
-      
-      return normalized;
-    }),
-    ...snapshotProperties.map((prop: any) => {
-      // For snapshot properties, ensure they have the right attributes
+    ...strapiProperties.map(normalizeProperty).filter(Boolean) as NormalizedProperty[],
+    ...snapshotProperties.map(prop => {
+      // For snapshot properties, use the original structure if it already has attributes
       if (prop.attributes) {
         return {
           ...prop,
@@ -203,8 +173,9 @@ export default async function PropertiesPage() {
           }
         };
       }
-      return prop;
-    })
+      // Otherwise normalize it with the utility
+      return normalizeProperty(prop);
+    }).filter(Boolean) as NormalizedProperty[]
   ];
   
   // Log normalized properties

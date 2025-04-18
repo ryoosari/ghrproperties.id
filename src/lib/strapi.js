@@ -63,6 +63,33 @@ export async function getProperties(options = {}) {
  */
 export async function getPropertyBySlug(slug) {
   try {
+    console.log(`Fetching property with slug: ${slug}`);
+    
+    // First try to check if we have this property locally in the data directory
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Check in the properties directory
+      const propertyPath = path.join(process.cwd(), 'data', 'properties', `${slug}.json`);
+      
+      if (fs.existsSync(propertyPath)) {
+        console.log(`Found local property file: ${propertyPath}`);
+        const propertyData = JSON.parse(fs.readFileSync(propertyPath, 'utf8'));
+        
+        // Return the property with attributes structure expected by the page component
+        return {
+          id: propertyData.id,
+          ...propertyData
+        };
+      } else {
+        console.log(`No local property file found at: ${propertyPath}`);
+      }
+    } catch (fsError) {
+      console.error('Error checking for local property file:', fsError);
+    }
+    
+    // If no local file is found, try the Strapi API
     const query = {
       filters: {
         Slug: {
@@ -73,16 +100,93 @@ export async function getPropertyBySlug(slug) {
     };
     
     const queryString = qs.stringify(query, { encodeValuesOnly: true });
+    console.log(`Strapi query: ${queryString}`);
+    
     const response = await strapiClient.get(`/properties?${queryString}`);
+    console.log(`Strapi response status: ${response.status}`);
     
     if (!response.data.data || response.data.data.length === 0) {
-      return null;
+      console.log(`No property found with slug: ${slug}`);
+      
+      // Also try the snapshot directory as a last resort
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const snapshotPath = path.join(process.cwd(), 'data', 'snapshot', `${slug}.json`);
+        
+        if (fs.existsSync(snapshotPath)) {
+          console.log(`Found snapshot property file: ${snapshotPath}`);
+          const snapshotData = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+          
+          // Return the property with attributes structure expected by the page component
+          return {
+            id: snapshotData.id,
+            ...snapshotData
+          };
+        } else {
+          console.log(`No snapshot property file found at: ${snapshotPath}`);
+          return null;
+        }
+      } catch (snapshotError) {
+        console.error('Error checking for snapshot property file:', snapshotError);
+        return null;
+      }
+    }
+    
+    console.log(`Found property with slug: ${slug}, ID: ${response.data.data[0].id}`);
+    
+    // Log property images for debugging
+    const property = response.data.data[0];
+    if (property.attributes?.Image) {
+      console.log(`Property has ${property.attributes.Image.data?.length || 0} images`);
+    } else if (property.Image) {
+      console.log(`Property has ${Array.isArray(property.Image) ? property.Image.length : 0} images`);
+    } else {
+      console.log('Property has no images');
+    }
+    
+    if (property.attributes?.MainImage || property.MainImage) {
+      console.log('Property has a MainImage');
+    } else {
+      console.log('Property has no MainImage');
     }
     
     // Return the property directly as it already has the correct structure
     return response.data.data[0];
   } catch (error) {
     console.error(`Error fetching property with slug ${slug}:`, error);
+    if (error.response) {
+      console.error(`Status: ${error.response.status}, Data:`, error.response.data);
+    }
+    
+    // As a final fallback, try to load from the files
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Try the properties directory first, then snapshot if needed
+      const propertyPath = path.join(process.cwd(), 'data', 'properties', `${slug}.json`);
+      const snapshotPath = path.join(process.cwd(), 'data', 'snapshot', `${slug}.json`);
+      
+      if (fs.existsSync(propertyPath)) {
+        console.log(`Fallback to local property file: ${propertyPath}`);
+        const propertyData = JSON.parse(fs.readFileSync(propertyPath, 'utf8'));
+        return {
+          id: propertyData.id,
+          ...propertyData
+        };
+      } else if (fs.existsSync(snapshotPath)) {
+        console.log(`Fallback to snapshot property file: ${snapshotPath}`);
+        const snapshotData = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+        return {
+          id: snapshotData.id,
+          ...snapshotData
+        };
+      }
+    } catch (fallbackError) {
+      console.error('Fallback to file also failed:', fallbackError);
+    }
+    
     return null;
   }
 }
@@ -143,13 +247,18 @@ export async function getPropertyById(id) {
  */
 export function getStrapiMediaUrl(media, format = '') {
   if (!media) {
-    return '';
+    return '/placeholder-property.jpg';
   }
   
   try {
     // Handle array of media objects (your Strapi structure)
     if (Array.isArray(media) && media.length > 0) {
       const imageObj = media[0];
+      
+      // Ensure we have a valid image object
+      if (!imageObj || typeof imageObj !== 'object') {
+        return '/placeholder-property.jpg';
+      }
       
       // If format is specified and available, use it
       if (format && 
@@ -166,15 +275,39 @@ export function getStrapiMediaUrl(media, format = '') {
         const fullUrl = imageObj.url.startsWith('/') ? `${STRAPI_URL}${imageObj.url}` : imageObj.url;
         return fullUrl;
       }
+      
+      return '/placeholder-property.jpg';
+    }
+    
+    // Handle single media object
+    if (media && typeof media === 'object') {
+      // If it's a direct media object with url
+      if (media.url) {
+        const fullUrl = media.url.startsWith('/') ? `${STRAPI_URL}${media.url}` : media.url;
+        return fullUrl;
+      }
+      
+      // If format is specified and available, use it
+      if (format && 
+          media.formats && 
+          media.formats[format] && 
+          media.formats[format].url) {
+        const formatUrl = media.formats[format].url;
+        const fullUrl = formatUrl.startsWith('/') ? `${STRAPI_URL}${formatUrl}` : formatUrl;
+        return fullUrl;
+      }
     }
     
     // Legacy structure with data property
     if (media.data) {
       // Handle array in data
       if (Array.isArray(media.data) && media.data.length > 0) {
-        const { url } = media.data[0].attributes;
-        const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
-        return fullUrl;
+        const dataObj = media.data[0];
+        if (dataObj && dataObj.attributes && dataObj.attributes.url) {
+          const { url } = dataObj.attributes;
+          const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
+          return fullUrl;
+        }
       }
       
       // Handle single object in data
@@ -185,10 +318,10 @@ export function getStrapiMediaUrl(media, format = '') {
       }
     }
     
-    return '';
+    return '/placeholder-property.jpg';
   } catch (error) {
     console.error('Error getting media URL:', error);
-    return '';
+    return '/placeholder-property.jpg';
   }
 }
 

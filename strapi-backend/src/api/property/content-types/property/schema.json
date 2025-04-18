@@ -29,6 +29,15 @@
         "audios"
       ]
     },
+    "MainImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "description": "The main image to display as the primary view for this property"
+    },
     "IsFeatured": {
       "type": "boolean",
       "default": false,
@@ -136,46 +145,6 @@
       "default": "Fully Furnished",
       "description": "The furnishing status of the property"
     },
-    "View": {
-      "type": "string",
-      "description": "What can be seen from the property (e.g., Ocean View, Garden View)"
-    },
-    "LocationHighlights": {
-      "type": "text",
-      "description": "Notable highlights about the property's location"
-    },
-    "DesignStyle": {
-      "type": "string",
-      "description": "Architectural style or design features of the property"
-    },
-    "Connectivity": {
-      "type": "text",
-      "description": "Internet and connectivity options available"
-    },
-    "EnergyFeatures": {
-      "type": "text",
-      "description": "Energy-saving or sustainable features of the property"
-    },
-    "SecurityFeatures": {
-      "type": "text",
-      "description": "Security systems and features of the property"
-    },
-    "OutdoorFeatures": {
-      "type": "text",
-      "description": "Details about gardens, balconies, or outdoor areas"
-    },
-    "SpecialFeatures": {
-      "type": "richtext",
-      "description": "Unique or special features that make this property stand out"
-    },
-    "VideoURL": {
-      "type": "string",
-      "description": "URL link to a video tour of the property"
-    },
-    "Neighborhood": {
-      "type": "string",
-      "description": "Information about the neighborhood surrounding the property"
-    },
     "Availability": {
       "type": "enumeration",
       "enum": [
@@ -186,18 +155,6 @@
       ],
       "default": "Available Now",
       "description": "Current availability status of the property"
-    },
-    "Kitchens": {
-      "type": "integer",
-      "min": 0,
-      "default": 1,
-      "description": "Number of kitchens in the property"
-    },
-    "LivingRooms": {
-      "type": "integer",
-      "min": 0,
-      "default": 1,
-      "description": "Number of living rooms in the property"
     },
     "Status": {
       "type": "enumeration",

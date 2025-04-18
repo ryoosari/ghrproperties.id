@@ -179,16 +179,61 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
   
   // Check for image in attributes
   if (attrs.featuredImage?.url) {
-    imageUrl = attrs.featuredImage.url.startsWith('/') ? 
-      `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${attrs.featuredImage.url}` : 
-      attrs.featuredImage.url;
-    imageSourceType = 'from-attributes';
+    // Check if this is already a local URL (starts with /property-images)
+    if (attrs.featuredImage.url.startsWith('/property-images/')) {
+      imageUrl = attrs.featuredImage.url;
+      imageSourceType = 'from-local-attributes';
+    } else {
+      // If it's a remote URL, convert it to full URL
+      imageUrl = attrs.featuredImage.url.startsWith('/') ? 
+        `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${attrs.featuredImage.url}` : 
+        attrs.featuredImage.url;
+      imageSourceType = 'from-remote-attributes';
+    }
+  }
+  // Check for MainImage first (new field)
+  else if (property.MainImage) {
+    // Use local image mapping for MainImage
+    const propertySlug = slug;
+    const mainImageUrl = property.MainImage.url;
+    
+    if (mainImageUrl) {
+      const mainImageFilename = mainImageUrl.split('/').pop();
+      if (mainImageFilename) {
+        imageUrl = `/property-images/${propertySlug}/large-large_${mainImageFilename}`;
+        imageSourceType = 'from-local-main-image';
+      } else {
+        // Fallback to Strapi URL if filename can't be extracted
+        imageUrl = getStrapiMediaUrl(property.MainImage);
+        imageSourceType = 'from-main-image';
+      }
+    } else {
+      // Fallback to Strapi URL if no URL in MainImage
+      imageUrl = getStrapiMediaUrl(property.MainImage);
+      imageSourceType = 'from-main-image';
+    }
   }
   // Then check other image formats
   else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
-    // Strapi image array format
-    imageUrl = getStrapiMediaUrl(property.Image, 'medium');
-    imageSourceType = 'from-array';
+    // Use local image mapping for Image array
+    const propertySlug = slug;
+    const firstImageUrl = property.Image[0].url;
+    
+    if (firstImageUrl) {
+      const firstImageFilename = firstImageUrl.split('/').pop();
+      if (firstImageFilename) {
+        imageUrl = `/property-images/${propertySlug}/large-large_${firstImageFilename}`;
+        imageSourceType = 'from-local-image-array';
+      } else {
+        // Fallback to Strapi URL if filename can't be extracted
+        imageUrl = getStrapiMediaUrl(property.Image, 'medium');
+        imageSourceType = 'from-array';
+      }
+    } else {
+      // Fallback to Strapi URL if no URL in first image
+      imageUrl = getStrapiMediaUrl(property.Image, 'medium');
+      imageSourceType = 'from-array';
+    }
   } else if (property.images && property.images.data) {
     // Legacy Strapi format
     imageUrl = getStrapiMediaUrl(property.images);

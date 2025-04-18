@@ -29,6 +29,93 @@ interface PropertySlug {
   slug: string;
 }
 
+// Add interface for the property data from Strapi
+interface StrapiProperty {
+  id: string | number;
+  Title?: string;
+  Description?: string;
+  Location?: string;
+  Price?: number;
+  Bedrooms?: number;
+  Bathrooms?: number;
+  Area?: number;
+  PropertyType?: string;
+  Status?: string;
+  Kitchens?: number;
+  LivingRooms?: number;
+  Image?: Array<{
+    url: string;
+    alternativeText?: string;
+    width?: number;
+    height?: number;
+  }>;
+  MainImage?: {
+    url: string;
+    alternativeText?: string;
+    width?: number;
+    height?: number;
+  };
+  VideoURL?: string;
+  YearBuilt?: number;
+  Availability?: string;
+  LandSize?: number;
+  Furnishing?: string;
+  DesignStyle?: string;
+  Connectivity?: string;
+  EnergyFeatures?: string;
+  SecurityFeatures?: string;
+  OutdoorFeatures?: string;
+  LocationHighlights?: string;
+  propertyLocation?: {
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+  };
+  Amenities?: Array<any>;
+  amenities?: Array<string>;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+// Define the normalized property structure
+interface NormalizedProperty {
+  id: any;
+  title: any;
+  description: any;
+  location: any;
+  price: any;
+  bedrooms: any;
+  bathrooms: any;
+  area: any;
+  property_type: any;
+  status: any;
+  kitchen: any;
+  living_room: any;
+  featured_image: string;
+  gallery_images: string[];
+  latitude: number | null;
+  longitude: number | null;
+  // Add missing properties
+  video_url?: any;
+  year_built?: any;
+  availability?: any;
+  land_size?: any;
+  furnishing?: any;
+  view?: any;
+  design_style?: any;
+  connectivity?: any;
+  energy_features?: any;
+  security_features?: any;
+  outdoor_features?: any;
+  location_highlights?: any;
+  neighborhood?: any;
+  address?: any;
+  amenities: any[];
+  special_features?: any;
+  slug?: string;
+}
+
 // Generate static paths for prerendering
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
@@ -174,6 +261,8 @@ function getAmenityIcon(name: string) {
 export default async function PropertyDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   
+  console.log(`Rendering property page for slug: ${slug}`);
+  
   // Handle placeholder case for static export
   if (slug === 'placeholder-property' && process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
     // Return a placeholder property page for static export
@@ -203,21 +292,98 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
     );
   }
   
-  // First, try to fetch from Strapi at build time
-  const strapiProperty = await getStrapiPropertyBySlug(slug);
+  // Get property data from Strapi API
+  let property;
+  try {
+    property = await getStrapiPropertyBySlug(slug);
+    console.log(`Property data fetched successfully: ${property ? 'Yes' : 'No'}`);
+  } catch (error) {
+    console.error(`Error fetching property data for slug "${slug}":`, error);
+    property = null;
+  }
   
-  // If not found in Strapi, try static data
-  const staticProperty = strapiProperty ? null : getStaticPropertyBySlug(slug);
-  
-  // Use the property from either source
-  const property = strapiProperty || staticProperty;
-  
+  // If property not found, show 404
   if (!property) {
+    console.log(`Property not found for slug: ${slug}, showing 404`);
     notFound();
   }
   
-  // Normalize property data to handle both formats
-  const normalizedProperty = normalizePropertyData(property);
+  // Cast to StrapiProperty type to fix TypeScript errors
+  const strapiProperty = property as StrapiProperty;
+  
+  // Prepare image URLs for the gallery
+  let featuredImageUrl = '/placeholder-property.jpg';
+  let galleryImages: string[] = [];
+  
+  try {
+    if (strapiProperty.MainImage && strapiProperty.MainImage.url) {
+      // Use MainImage as the featured image if available
+      featuredImageUrl = getStrapiMediaUrl(strapiProperty.MainImage);
+    } 
+    else if (strapiProperty.Image && Array.isArray(strapiProperty.Image) && strapiProperty.Image.length > 0 && strapiProperty.Image[0].url) {
+      // Use the first image from the Image array as featured
+      featuredImageUrl = getStrapiMediaUrl(strapiProperty.Image[0]);
+    }
+    
+    // Add all images from the Image array to the gallery
+    if (strapiProperty.Image && Array.isArray(strapiProperty.Image)) {
+      galleryImages = strapiProperty.Image
+        .filter((img: any) => img && img.url)
+        .map((img: any) => getStrapiMediaUrl(img));
+    }
+  } catch (error) {
+    console.error('Error processing property images:', error);
+    // Keep default values if there's an error
+  }
+  
+  // Extract amenities from Strapi format
+  let amenities: any[] = [];
+  
+  // Handle component-based amenities (new format)
+  if (strapiProperty.Amenities && Array.isArray(strapiProperty.Amenities)) {
+    amenities = strapiProperty.Amenities;
+  } 
+  // Handle old format (direct string array)
+  else if (strapiProperty.amenities && Array.isArray(strapiProperty.amenities)) {
+    amenities = strapiProperty.amenities;
+  }
+  
+  // Normalize the raw property to have consistent structure for display
+  const normalizedProperty: NormalizedProperty = {
+    id: strapiProperty.id ? String(strapiProperty.id) : `property-${Date.now()}`,
+    title: strapiProperty.Title || 'Property Details',
+    description: strapiProperty.Description || '',
+    location: strapiProperty.Location || '',
+    price: strapiProperty.Price || 0,
+    bedrooms: strapiProperty.Bedrooms || 0,
+    bathrooms: strapiProperty.Bathrooms || 0,
+    area: strapiProperty.Area || 0,
+    property_type: strapiProperty.PropertyType || 'Villa',
+    status: strapiProperty.Status || 'For Sale',
+    kitchen: 1, // Default value since Kitchens field is removed
+    living_room: 1, // Default value since LivingRooms field is removed
+    featured_image: featuredImageUrl || '/placeholder-property.jpg',
+    gallery_images: galleryImages || [],
+    latitude: strapiProperty.propertyLocation?.latitude ? parseFloat(String(strapiProperty.propertyLocation.latitude)) : null,
+    longitude: strapiProperty.propertyLocation?.longitude ? parseFloat(String(strapiProperty.propertyLocation.longitude)) : null,
+    video_url: '', // Default value since VideoURL field is removed
+    year_built: strapiProperty.YearBuilt || '',
+    availability: strapiProperty.Availability || '',
+    land_size: strapiProperty.LandSize || 0,
+    furnishing: strapiProperty.Furnishing || '',
+    view: '', // Default value since View field is removed
+    design_style: '', // Default value since DesignStyle field is removed
+    connectivity: '', // Default value since Connectivity field is removed
+    energy_features: '', // Default value since EnergyFeatures field is removed
+    security_features: '', // Default value since SecurityFeatures field is removed
+    outdoor_features: '', // Default value since OutdoorFeatures field is removed
+    location_highlights: '', // Default value since LocationHighlights field is removed
+    neighborhood: '', // Default value since Neighborhood field is removed
+    address: strapiProperty.propertyLocation?.address || '',
+    amenities: amenities || [],
+    special_features: '', // Default value since SpecialFeatures field is removed
+    slug: strapiProperty.Slug || strapiProperty.slug || `property-${strapiProperty.id ? String(strapiProperty.id) : Date.now()}`
+  };
   
   return (
     <main className="flex min-h-screen flex-col">
@@ -372,45 +538,6 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
               </div>
             </div>
             
-            {/* Property Video Tour (if available) */}
-            <div className="p-8 border-b bg-gray-50">
-              <h2 className="text-xl font-bold mb-6 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                </svg>
-                Property Video Tour
-              </h2>
-              {normalizedProperty.video_url ? (
-                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-lg">
-                  <iframe 
-                    src={normalizedProperty.video_url}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                    loading="lazy"
-                    title={`${normalizedProperty.title} video tour`}
-                  ></iframe>
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg p-8 text-center border border-gray-200 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">Video tour not available</h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">Contact our team to schedule a personal viewing or request a live video tour of this property.</p>
-                  <Link 
-                    href="/contact" 
-                    className="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors shadow-sm"
-                  >
-                    Request a Tour
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </Link>
-                </div>
-              )}
-            </div>
-            
             {/* Property Details - Expanded */}
             <div className="p-6 border-b">
               <h2 className="text-xl font-bold mb-6 flex items-center">
@@ -449,10 +576,16 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                         <span className="font-medium w-32 text-gray-600">Availability:</span> 
                         <span className="text-gray-800">{normalizedProperty.availability}</span>
                       </li>
+                      <li className="flex">
+                        <span className="font-medium w-32 text-gray-600">Furnishing:</span> 
+                        <span className="text-gray-800">{normalizedProperty.furnishing || 'Not specified'}</span>
+                      </li>
                     </ul>
                   </div>
+                </div>
 
-                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div>
+                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow mb-6">
                     <h3 className="font-semibold mb-4 text-primary flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
@@ -492,80 +625,20 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                       </li>
                     </ul>
                   </div>
-                </div>
-
-                <div>
-                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow mb-6">
-                    <h3 className="font-semibold mb-4 text-primary flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                      Features & Specifications
-                    </h3>
-                    <ul className="space-y-3 text-gray-700">
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Furnishing:</span> 
-                        <span className="text-gray-800">{normalizedProperty.furnishing || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">View:</span> 
-                        <span className="text-gray-800">{normalizedProperty.view || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Design Style:</span> 
-                        <span className="text-gray-800">{normalizedProperty.design_style || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Connectivity:</span> 
-                        <span className="text-gray-800">{normalizedProperty.connectivity || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Energy Features:</span> 
-                        <span className="text-gray-800">{normalizedProperty.energy_features || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Security:</span> 
-                        <span className="text-gray-800">{normalizedProperty.security_features || 'Not specified'}</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <h3 className="font-semibold mb-4 text-primary flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      Location Features
-                    </h3>
-                    <ul className="space-y-3 text-gray-700">
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Address:</span> 
-                        <span className="text-gray-800">{normalizedProperty.address || 'Contact agent for details'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Neighborhood:</span> 
-                        <span className="text-gray-800">{normalizedProperty.neighborhood || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Location Highlights:</span> 
-                        <span className="text-gray-800">{normalizedProperty.location_highlights || 'Not specified'}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-gray-600">Outdoor Features:</span> 
-                        <span className="text-gray-800">{normalizedProperty.outdoor_features || 'Not specified'}</span>
-                      </li>
-                    </ul>
-                  </div>
+                  
+                  {normalizedProperty.special_features && (
+                    <div className="bg-primary/5 p-5 rounded-lg border border-primary/10 shadow-sm hover:shadow-md transition-shadow">
+                      <h3 className="font-semibold mb-4 text-primary flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        Special Features
+                      </h3>
+                      <p className="text-gray-700">{normalizedProperty.special_features}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {normalizedProperty.special_features && (
-                <div className="mt-6 bg-primary/5 p-4 rounded-lg">
-                  <h3 className="font-medium text-primary mb-2">Special Features</h3>
-                  <p className="text-gray-700">{normalizedProperty.special_features}</p>
-                </div>
-              )}
             </div>
             
             {/* Nearby Attractions - REMOVED */}
@@ -680,61 +753,6 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 </div>
               </div>
             )}
-            
-            {/* Property Documents */}
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                </svg>
-                Property Documents
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors flex items-center">
-                  <div className="bg-primary/10 p-3 rounded-full text-primary mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Property Brochure</h3>
-                    <p className="text-sm text-gray-600">PDF • 2.3MB</p>
-                    <Link 
-                      href="#"
-                      className="text-primary text-sm hover:underline inline-flex items-center mt-1"
-                    >
-                      Download
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors flex items-center">
-                  <div className="bg-primary/10 p-3 rounded-full text-primary mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Floor Plan</h3>
-                    <p className="text-sm text-gray-600">PDF • 1.5MB</p>
-                    <Link 
-                      href="#"
-                      className="text-primary text-sm hover:underline inline-flex items-center mt-1"
-                    >
-                      Download
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-gray-500">
-                For additional documents and information, please contact our agents directly.
-              </p>
-            </div>
           </div>
           
           {/* Contact Agent Section */}
@@ -747,7 +765,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.414L11 9.586V3a1 1 0 112 0v4.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
                 Request a Viewing
               </Link>
@@ -833,16 +851,42 @@ function normalizePropertyData(property: any) {
   if (property.attributes) {
     const { attributes } = property;
     
-    // Extract featured image URL - use local path
-    const featuredImageUrl = `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg`;
+    // Extract featured image URL - prioritize MainImage if available
+    let featuredImageUrl = '/placeholder-property.jpg';
+    let galleryImages: string[] = [];
     
-    // Extract gallery images - use local paths 
-    const galleryImages = [
-      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg`,
-      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg`,
-      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg`,
-      `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg`
-    ];
+    // Use MainImage as featured image if available
+    if (attributes.MainImage && attributes.MainImage.url) {
+      const mainImageUrl = attributes.MainImage.url;
+      const mainImageFilename = mainImageUrl.split('/').pop();
+      
+      if (mainImageFilename) {
+        featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
+      }
+    } 
+    // Fall back to first image from Image array
+    else if (attributes.Image && Array.isArray(attributes.Image) && attributes.Image.length > 0) {
+      const firstImage = attributes.Image[0];
+      if (firstImage && firstImage.url) {
+        const firstImageUrl = firstImage.url;
+        const firstImageFilename = firstImageUrl.split('/').pop();
+        
+        if (firstImageFilename) {
+          featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
+        }
+      }
+    }
+    
+    // Extract gallery images from Image array
+    if (attributes.Image && Array.isArray(attributes.Image)) {
+      galleryImages = attributes.Image
+        .filter((img: any) => img && img.url)
+        .map((img: any) => {
+          const imgUrl = img.url;
+          const imgFilename = imgUrl.split('/').pop();
+          return `${localImageBasePath}/large-large_${imgFilename}`;
+        });
+    }
     
     // Extract amenities if they exist - handle component structure
     let amenities = [];
@@ -879,35 +923,21 @@ function normalizePropertyData(property: any) {
 
     return {
       id: property.id,
-      title: attributes.title || attributes.Title || 'Unnamed Property',
-      description: attributes.description || attributes.Description || '',
-      location: attributes.location || attributes.Location || 'Location not specified',
-      price: attributes.price || attributes.Price || 0,
-      bedrooms: attributes.bedrooms || attributes.Bedrooms || 0,
-      bathrooms: attributes.bathrooms || attributes.Bathrooms || 0,
-      area: attributes.Area || attributes.area || 'N/A',
-      land_size: attributes.LandSize || attributes.land_size || attributes.Area || 0,
+      title: attributes.title || 'Unnamed Property',
+      description: attributes.description || '',
+      location: attributes.location || 'Location not specified',
+      price: attributes.price || 0,
+      bedrooms: attributes.bedrooms || 0,
+      bathrooms: attributes.bathrooms || 0,
+      area: attributes.Area || attributes.square_footage || attributes.area || 'N/A',
       property_type: attributes.PropertyType || attributes.property_type || 'Property',
-      status: attributes.Status || attributes.status || 'unlisted',
-      year_built: attributes.YearBuilt || attributes.year_built || null,
-      furnishing: attributes.Furnishing || attributes.furnishing || null,
-      view: attributes.View || attributes.view || null,
-      location_highlights: attributes.LocationHighlights || attributes.location_highlights || null,
-      design_style: attributes.DesignStyle || attributes.design_style || null,
-      connectivity: attributes.Connectivity || attributes.connectivity || null,
-      energy_features: attributes.EnergyFeatures || attributes.energy_features || null,
-      security_features: attributes.SecurityFeatures || attributes.security_features || null,
-      outdoor_features: attributes.OutdoorFeatures || attributes.outdoor_features || null,
-      special_features: attributes.SpecialFeatures || attributes.special_features || null,
-      video_url: attributes.VideoURL || attributes.video_url || null,
-      neighborhood: attributes.Neighborhood || attributes.neighborhood || null,
-      availability: attributes.Availability || attributes.availability || 'Available Now',
-      kitchen: attributes.Kitchens || attributes.kitchen || 1,
-      living_room: attributes.LivingRooms || attributes.living_room || 1,
+      status: attributes.status || 'unlisted',
+      kitchen: attributes.kitchen || 1,
+      living_room: attributes.living_room || 1,
       featured_image: featuredImageUrl,
       gallery_images: galleryImages,
       amenities: amenities,
-      slug: attributes.slug || attributes.Slug,
+      slug: attributes.slug,
       // Add location details
       address: address,
       latitude: latitude,
@@ -916,16 +946,42 @@ function normalizePropertyData(property: any) {
   }
   
   // If it's a Strapi property (direct properties), normalize it
-  // Extract featured image - use local path
-  const featuredImageUrl = `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg`;
+  // Extract featured image - prioritize MainImage if available
+  let featuredImageUrl = '/placeholder-property.jpg';
+  let galleryImages: string[] = [];
   
-  // Extract gallery images - use local paths
-  const galleryImages = [
-    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg`,
-    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg`,
-    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg`,
-    `${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg`
-  ];
+  // Use MainImage as featured image if available
+  if (property.MainImage && property.MainImage.url) {
+    const mainImageUrl = property.MainImage.url;
+    const mainImageFilename = mainImageUrl.split('/').pop();
+    
+    if (mainImageFilename) {
+      featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
+    }
+  } 
+  // Fall back to first image from Image array
+  else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
+    const firstImage = property.Image[0];
+    if (firstImage && firstImage.url) {
+      const firstImageUrl = firstImage.url;
+      const firstImageFilename = firstImageUrl.split('/').pop();
+      
+      if (firstImageFilename) {
+        featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
+      }
+    }
+  }
+  
+  // Extract gallery images from Image array
+  if (property.Image && Array.isArray(property.Image)) {
+    galleryImages = property.Image
+      .filter((img: any) => img && img.url)
+      .map((img: any) => {
+        const imgUrl = img.url;
+        const imgFilename = imgUrl.split('/').pop();
+        return `${localImageBasePath}/large-large_${imgFilename}`;
+      });
+  }
   
   // Extract amenities from Strapi format - handle component structure
   let amenities = [];
@@ -968,25 +1024,11 @@ function normalizePropertyData(property: any) {
     price: property.Price || 0,
     bedrooms: property.Bedrooms || 0,
     bathrooms: property.Bathrooms || 0,
-    area: property.Area || 'N/A',
-    land_size: property.LandSize || property.land_size || property.Area || 0,
+    area: property.Area || property.square_footage || 'N/A',
     property_type: property.PropertyType || 'Property',
     status: property.Status || 'unlisted',
-    year_built: property.YearBuilt || property.year_built || null,
-    furnishing: property.Furnishing || property.furnishing || null,
-    view: property.View || property.view || null,
-    location_highlights: property.LocationHighlights || property.location_highlights || null,
-    design_style: property.DesignStyle || property.design_style || null,
-    connectivity: property.Connectivity || property.connectivity || null, 
-    energy_features: property.EnergyFeatures || property.energy_features || null,
-    security_features: property.SecurityFeatures || property.security_features || null,
-    outdoor_features: property.OutdoorFeatures || property.outdoor_features || null,
-    special_features: property.SpecialFeatures || property.special_features || null,
-    video_url: property.VideoURL || property.video_url || null,
-    neighborhood: property.Neighborhood || property.neighborhood || null,
-    availability: property.Availability || property.availability || 'Available Now',
-    kitchen: property.Kitchens || property.kitchen || 1,
-    living_room: property.LivingRooms || property.living_room || 1,
+    kitchen: property.Kitchen || 1,
+    living_room: property.LivingRoom || 1,
     featured_image: featuredImageUrl,
     gallery_images: galleryImages,
     amenities: amenities,

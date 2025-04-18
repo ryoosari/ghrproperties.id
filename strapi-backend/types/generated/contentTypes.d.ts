@@ -420,13 +420,10 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
         number
       > &
       Schema.Attribute.DefaultTo<0>;
-    Connectivity: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     Description: Schema.Attribute.Text;
-    DesignStyle: Schema.Attribute.String;
-    EnergyFeatures: Schema.Attribute.Text;
     Furnishing: Schema.Attribute.Enumeration<
       ['Fully Furnished', 'Semi-Furnished', 'Unfurnished']
     > &
@@ -436,14 +433,6 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
       true
     >;
     IsFeatured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    Kitchens: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<1>;
     LandSize: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -452,14 +441,6 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
         number
       > &
       Schema.Attribute.DefaultTo<0>;
-    LivingRooms: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<1>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -486,9 +467,7 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Kuta, Bali'>;
-    LocationHighlights: Schema.Attribute.Text;
-    Neighborhood: Schema.Attribute.String;
-    OutdoorFeatures: Schema.Attribute.Text;
+    MainImage: Schema.Attribute.Media<'images'>;
     Price: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -511,11 +490,9 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Villa'>;
     publishedAt: Schema.Attribute.DateTime;
-    SecurityFeatures: Schema.Attribute.Text;
     Slug: Schema.Attribute.UID<'Title'> &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
-    SpecialFeatures: Schema.Attribute.RichText;
     Status: Schema.Attribute.Enumeration<
       ['For Sale', 'For Rent', 'Sold', 'Rented']
     > &
@@ -524,8 +501,6 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    VideoURL: Schema.Attribute.String;
-    View: Schema.Attribute.String;
     YearBuilt: Schema.Attribute.Integer;
   };
 }

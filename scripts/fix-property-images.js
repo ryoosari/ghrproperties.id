@@ -39,16 +39,42 @@ function fixPropertyImages() {
   if (property.attributes) {
     const { attributes } = property;
     
-    // Extract featured image URL - use local path
-    const featuredImageUrl = \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg\`;
+    // Extract featured image URL - prioritize MainImage if available
+    let featuredImageUrl = '/placeholder-property.jpg';
+    let galleryImages: string[] = [];
     
-    // Extract gallery images - use local paths 
-    const galleryImages = [
-      \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg\`,
-      \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg\`,
-      \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg\`,
-      \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg\`
-    ];
+    // Use MainImage as featured image if available
+    if (attributes.MainImage && attributes.MainImage.url) {
+      const mainImageUrl = attributes.MainImage.url;
+      const mainImageFilename = mainImageUrl.split('/').pop();
+      
+      if (mainImageFilename) {
+        featuredImageUrl = \`\${localImageBasePath}/large-large_\${mainImageFilename}\`;
+      }
+    } 
+    // Fall back to first image from Image array
+    else if (attributes.Image && Array.isArray(attributes.Image) && attributes.Image.length > 0) {
+      const firstImage = attributes.Image[0];
+      if (firstImage && firstImage.url) {
+        const firstImageUrl = firstImage.url;
+        const firstImageFilename = firstImageUrl.split('/').pop();
+        
+        if (firstImageFilename) {
+          featuredImageUrl = \`\${localImageBasePath}/large-large_\${firstImageFilename}\`;
+        }
+      }
+    }
+    
+    // Extract gallery images from Image array
+    if (attributes.Image && Array.isArray(attributes.Image)) {
+      galleryImages = attributes.Image
+        .filter(img => img && img.url)
+        .map(img => {
+          const imgUrl = img.url;
+          const imgFilename = imgUrl.split('/').pop();
+          return \`\${localImageBasePath}/large-large_\${imgFilename}\`;
+        });
+    }
     
     // Extract amenities if they exist - handle component structure
     let amenities = [];
@@ -108,16 +134,42 @@ function fixPropertyImages() {
   }
   
   // If it's a Strapi property (direct properties), normalize it
-  // Extract featured image - use local path
-  const featuredImageUrl = \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg\`;
+  // Extract featured image - prioritize MainImage if available
+  let featuredImageUrl = '/placeholder-property.jpg';
+  let galleryImages: string[] = [];
   
-  // Extract gallery images - use local paths
-  const galleryImages = [
-    \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_b6edab17a8.jpeg\`,
-    \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_29_e9f78a50ac.jpeg\`,
-    \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_30_1_d38d7f4414.jpeg\`,
-    \`\${localImageBasePath}/large-large_Whats_App_Image_2025_03_07_at_12_21_31_f93b813cd5.jpeg\`
-  ];
+  // Use MainImage as featured image if available
+  if (property.MainImage && property.MainImage.url) {
+    const mainImageUrl = property.MainImage.url;
+    const mainImageFilename = mainImageUrl.split('/').pop();
+    
+    if (mainImageFilename) {
+      featuredImageUrl = \`\${localImageBasePath}/large-large_\${mainImageFilename}\`;
+    }
+  } 
+  // Fall back to first image from Image array
+  else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
+    const firstImage = property.Image[0];
+    if (firstImage && firstImage.url) {
+      const firstImageUrl = firstImage.url;
+      const firstImageFilename = firstImageUrl.split('/').pop();
+      
+      if (firstImageFilename) {
+        featuredImageUrl = \`\${localImageBasePath}/large-large_\${firstImageFilename}\`;
+      }
+    }
+  }
+  
+  // Extract gallery images from Image array
+  if (property.Image && Array.isArray(property.Image)) {
+    galleryImages = property.Image
+      .filter(img => img && img.url)
+      .map(img => {
+        const imgUrl = img.url;
+        const imgFilename = imgUrl.split('/').pop();
+        return \`\${localImageBasePath}/large-large_\${imgFilename}\`;
+      });
+  }
   
   // Extract amenities from Strapi format - handle component structure
   let amenities = [];

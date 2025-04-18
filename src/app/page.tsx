@@ -11,6 +11,7 @@ import { TestimonialSection } from '@/components/testimonial-section';
 import { CTASection } from '@/components/cta-section';
 import { getAllProperties } from '@/utils/snapshot';
 import { getProperties } from '@/lib/strapi';
+import { normalizeProperty } from '@/lib/property-normalizer';
 import path from 'path';
 import fs from 'fs';
 
@@ -60,38 +61,9 @@ export default async function Home() {
   
   // Normalize all properties to have consistent structure
   const normalizedProperties = [
-    ...strapiProperties.map((prop: any) => {
-      // The Strapi properties have the fields directly on the object, not nested in attributes
-      return {
-        id: prop.id,
-        attributes: {
-          title: prop.Title || 'Untitled Property',
-          slug: prop.Slug || `property-${prop.id}`,
-          status: 'published', // Default to published
-          price: prop.Price || 0,
-          description: prop.Description || '',
-          isFeatured: prop.IsFeatured || false, // Check for the featured flag
-          createdAt: prop.createdAt || new Date().toISOString(),
-          updatedAt: prop.updatedAt || new Date().toISOString(),
-          // Handle images
-          featuredImage: prop.Image && prop.Image.length > 0 ? {
-            url: prop.Image[0].url || '',
-            alternativeText: prop.Image[0].alternativeText || prop.Title || '',
-            width: prop.Image[0].width || 800,
-            height: prop.Image[0].height || 600
-          } : null,
-          images: prop.Image && Array.isArray(prop.Image) ? 
-            prop.Image.map((img: any) => ({
-              url: img.url || '',
-              alternativeText: img.alternativeText || prop.Title || '',
-              width: img.width || 800,
-              height: img.height || 600
-            })) : []
-        }
-      };
-    }),
-    ...snapshotProperties.map((prop: any) => {
-      // For snapshot properties, ensure they have the right attributes and check for featured flag
+    ...strapiProperties.map(normalizeProperty).filter(Boolean),
+    ...snapshotProperties.map(prop => {
+      // For snapshot properties, use the original structure if it already has attributes
       if (prop.attributes) {
         return {
           ...prop,
@@ -105,8 +77,9 @@ export default async function Home() {
           }
         };
       }
-      return prop;
-    })
+      // Otherwise normalize it
+      return normalizeProperty(prop);
+    }).filter(Boolean)
   ];
   
   // Remove duplicates by slug

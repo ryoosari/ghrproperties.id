@@ -764,6 +764,7 @@ async function createNormalizedSnapshot() {
           updatedAt: property.updatedAt,
           amenities: normalizeAmenities(property),
           featured_image: normalizeImage(property.Image || property.featured_image),
+          main_image: normalizeImage(property.MainImage) || normalizeImage(property.Image && Array.isArray(property.Image) && property.Image.length > 0 ? property.Image[0] : null),
           images: normalizeImages(property.Image || property.images),
           published_at: property.publishedAt || property.published_at,
           // Add documentId since it's in our data
@@ -840,6 +841,12 @@ function normalizeImage(imageData) {
   // If it's a URL string
   if (typeof imageData === 'string') {
     return imageData;
+  }
+  
+  // If it's a MainImage object (single object with url and formats)
+  if (!Array.isArray(imageData) && imageData.url) {
+    const url = imageData.url;
+    return url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
   }
   
   // If it's an array of Strapi media objects (the structure we're seeing)

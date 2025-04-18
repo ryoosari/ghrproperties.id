@@ -21,7 +21,7 @@ const PropertyImageGallery = dynamic(() => import('@/components/property/image-g
 });
 
 interface PropertyGallerySectionProps {
-  featuredImage: string;
+  featuredImage: string;  // This will use MainImage if available, otherwise use first image from Image array
   galleryImages: string[];
   propertyTitle: string;
 }

@@ -77,12 +77,6 @@ async function processProperty(property) {
   try {
     console.log(`Processing property: ${property.Title || property.title || `ID: ${property.id}`}`);
     
-    // Skip if no images
-    if (!property.Image || !Array.isArray(property.Image) || property.Image.length === 0) {
-      console.log('  No images found for this property');
-      return [];
-    }
-    
     const propertyId = property.id;
     const propertySlug = property.Slug || property.slug || `property-${propertyId}`;
     
@@ -95,6 +89,62 @@ async function processProperty(property) {
     // Process each image
     const imageResults = [];
     
+    // First process MainImage if it exists
+    if (property.MainImage && property.MainImage.url) {
+      const mainImage = property.MainImage;
+      
+      // Try to get formats for MainImage
+      const formats = [
+        { name: 'large', obj: mainImage.formats?.large },
+        { name: 'medium', obj: mainImage.formats?.medium },
+        { name: 'small', obj: mainImage.formats?.small },
+        { name: 'thumbnail', obj: mainImage.formats?.thumbnail },
+        { name: 'original', obj: { url: mainImage.url } } // Original as fallback
+      ];
+      
+      // Download each format that exists
+      for (const format of formats) {
+        if (format.obj && format.obj.url) {
+          const url = format.obj.url;
+          const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
+          
+          // Extract filename from the URL
+          const urlPath = new URL(fullUrl).pathname;
+          const filename = path.basename(urlPath);
+          const outputPath = path.join(propertyImagesDir, `${format.name}-${filename}`);
+          
+          try {
+            console.log(`  Downloading ${format.name} MainImage: ${filename}`);
+            await downloadFile(fullUrl, outputPath);
+            
+            imageResults.push({
+              propertyId,
+              propertySlug,
+              originalUrl: fullUrl,
+              localPath: `/property-images/${propertySlug}/${format.name}-${filename}`,
+              format: format.name,
+              isMainImage: true
+            });
+            
+            console.log(`  ✅ Downloaded MainImage to ${outputPath}`);
+          } catch (error) {
+            console.error(`  ❌ Error downloading ${format.name} MainImage:`, error.message);
+          }
+        }
+      }
+    }
+    
+    // Skip if no images in Image array
+    if (!property.Image || !Array.isArray(property.Image) || property.Image.length === 0) {
+      if (imageResults.length === 0) {
+        console.log('  No images found for this property');
+      } else {
+        console.log(`  Downloaded ${imageResults.length} MainImage formats, no Image array found`);
+      }
+      return imageResults;
+    }
+    
+    // Process each image in the Image array
     for (let i = 0; i < property.Image.length; i++) {
       const image = property.Image[i];
       

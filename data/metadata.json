@@ -1,7 +1,11 @@
 {
+<<<<<<< Updated upstream
   "exportedAt": "2025-04-17T01:55:55.645Z",
+=======
+  "exportedAt": "2025-04-14T21:33:50.913Z",
+>>>>>>> Stashed changes
   "stats": {
-    "properties": 0,
+    "properties": 1,
     "updatedSlugs": 0
   },
   "source": "http://localhost:1337"

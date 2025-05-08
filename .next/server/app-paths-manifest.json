@@ -1,5 +1,11 @@
 {
+<<<<<<< Updated upstream
   "/properties/[slug]/page": "app/properties/[slug]/page.js",
   "/properties/page": "app/properties/page.js",
   "/page": "app/page.js"
+=======
+  "/properties/page": "app/properties/page.js",
+  "/page": "app/page.js",
+  "/properties/[slug]/page": "app/properties/[slug]/page.js"
+>>>>>>> Stashed changes
 }

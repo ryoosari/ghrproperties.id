@@ -1,1 +1,14 @@
-{}
+{
+  "components/PropertyGallerySection.tsx -> @/components/property/image-gallery": {
+    "id": "components/PropertyGallerySection.tsx -> @/components/property/image-gallery",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_property_image-gallery_tsx.js"
+    ]
+  },
+  "components/dynamic-map.tsx -> ./property-map": {
+    "id": "components/dynamic-map.tsx -> ./property-map",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_property-map_tsx.js"
+    ]
+  }
+}

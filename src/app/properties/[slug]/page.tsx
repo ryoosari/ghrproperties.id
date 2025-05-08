@@ -667,7 +667,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 <p className="flex items-center text-gray-700">
                   <FaMapMarkerAlt className="mr-2 text-primary" />
                   <span className="font-medium">
-                    {normalizedProperty.address || normalizedProperty.location || 'Location details not available'}
+                    {normalizedProperty.location || 'Location details not available'}
                   </span>
                 </p>
                 
@@ -690,22 +690,6 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                       The blue circle shows the approximate area where this property is located. 
                       For exact location details, please contact our agents.
                     </p>
-                  </div>
-                )}
-                
-                {normalizedProperty.address && (
-                  <div className="mt-3">
-                    <a 
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(normalizedProperty.address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:text-primary-dark text-sm flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1">
-                        <path fillRule="evenodd" d="M15.75 2.25H21a.75.75 0 01.75.75v5.25a.75.75 0 01-1.5 0V4.81L8.03 17.03a.75.75 0 01-1.06-1.06L19.19 3.75h-3.44a.75.75 0 010-1.5zm-10.5 4.5a1.5 1.5 0 00-1.5 1.5v10.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5V10.5a.75.75 0 011.5 0v8.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V8.25a3 3 0 013-3h8.25a.75.75 0 010 1.5H5.25z" clipRule="evenodd" />
-                      </svg>
-                      View on Google Maps
-                    </a>
                   </div>
                 )}
                 
@@ -880,8 +864,8 @@ function normalizePropertyData(property: any) {
     // Extract gallery images from Image array
     if (attributes.Image && Array.isArray(attributes.Image)) {
       galleryImages = attributes.Image
-        .filter((img: any) => img && img.url)
-        .map((img: any) => {
+        .filter(img => img && img.url)
+        .map(img => {
           const imgUrl = img.url;
           const imgFilename = imgUrl.split('/').pop();
           return `${localImageBasePath}/large-large_${imgFilename}`;
@@ -975,8 +959,8 @@ function normalizePropertyData(property: any) {
   // Extract gallery images from Image array
   if (property.Image && Array.isArray(property.Image)) {
     galleryImages = property.Image
-      .filter((img: any) => img && img.url)
-      .map((img: any) => {
+      .filter(img => img && img.url)
+      .map(img => {
         const imgUrl = img.url;
         const imgFilename = imgUrl.split('/').pop();
         return `${localImageBasePath}/large-large_${imgFilename}`;

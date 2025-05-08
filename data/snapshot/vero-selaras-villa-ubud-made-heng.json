@@ -1,5 +1,5 @@
 {
-  "id": 7,
+  "id": 8,
   "attributes": {
     "title": "Vero Selaras: Villa Ubud Made Heng",
     "slug": "vero-selaras-villa-ubud-made-heng",
@@ -12,7 +12,7 @@
     "bathrooms": 3,
     "area": 100,
     "createdAt": "2025-04-14T18:50:24.201Z",
-    "updatedAt": "2025-04-14T20:53:46.081Z",
+    "updatedAt": "2025-04-18T12:52:35.782Z",
     "amenities": [],
     "featured_image": "http://localhost:1337/uploads/Bathroom_1_1_dee52c2a66.jpg",
     "main_image": "http://localhost:1337/uploads/Exterior_1_5968f3b2b7.jpg",
@@ -38,7 +38,7 @@
       "http://localhost:1337/uploads/Pool_1_24a92f3c8b.jpg",
       "http://localhost:1337/uploads/Pool_2_3aed89594f.jpg"
     ],
-    "published_at": "2025-04-14T20:53:46.094Z",
+    "published_at": "2025-04-18T12:52:35.800Z",
     "documentId": "mrhxlq06o7hz31wv0j9tbmw7"
   }
 }

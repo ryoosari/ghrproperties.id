@@ -1,20 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-interface PropertyMapProps {
-  propertyData: {
-    title: string;
-    latitude?: number | null;
-    longitude?: number | null;
-    location?: string;
-    address?: string;
-  };
-  height?: string;
-  estimateRadius?: number;
-}
+import React, { useEffect, useRef, useState } from 'react';
 
 // Bali location database - approximate coordinates for common areas
 const BALI_LOCATIONS: Record<string, { lat: number; lng: number }> = {
@@ -37,6 +23,18 @@ const BALI_LOCATIONS: Record<string, { lat: number; lng: number }> = {
   // Default center of Bali
   'Bali': { lat: -8.3405, lng: 115.0920 }
 };
+
+interface PropertyMapProps {
+  propertyData: {
+    title: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    location?: string;
+    address?: string;
+  };
+  height?: string;
+  estimateRadius?: number;
+}
 
 // Function to get better approximate coordinates from location string
 function getApproximateCoordinates(location: string | undefined): { lat: number; lng: number } {
@@ -69,86 +67,124 @@ export default function PropertyMap({
   estimateRadius = 300
 }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  
+  // For debugging
+  useEffect(() => {
+    console.log("PropertyMap component received data:", JSON.stringify(propertyData, null, 2));
+  }, [propertyData]);
   
   useEffect(() => {
-    // Dynamically load Leaflet and initialize map
-    if (mapRef.current && !mapInstanceRef.current) {
-      // Fix Leaflet icon paths
-      // This is needed because Leaflet's CSS assumes these icons are in the same directory as the CSS
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-      
-      // Determine if we have exact coordinates
-      const hasExactCoordinates = 
-        propertyData.latitude != null && 
-        propertyData.longitude != null && 
-        !isNaN(propertyData.latitude) && 
-        !isNaN(propertyData.longitude);
-      
-      // Get coordinates - either exact or approximated
-      let latitude: number;
-      let longitude: number;
-      
-      if (hasExactCoordinates) {
-        latitude = propertyData.latitude as number;
-        longitude = propertyData.longitude as number;
-      } else {
-        // Get approximate coordinates from location
-        const approximateCoords = getApproximateCoordinates(propertyData.location || propertyData.address);
-        latitude = approximateCoords.lat;
-        longitude = approximateCoords.lng;
-      }
-      
-      // Create map
-      const map = L.map(mapRef.current).setView([latitude, longitude], hasExactCoordinates ? 15 : 13);
-      
-      // Add tile layer (OpenStreetMap)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-      
-      if (hasExactCoordinates) {
-        // Add marker for exact location
-        L.marker([latitude, longitude])
-          .addTo(map)
-          .bindPopup(`<b>${propertyData.title}</b><br>${propertyData.address || propertyData.location || 'Unknown location'}`)
-          .openPopup();
-      } else {
-        // Add circle for approximate location
-        L.circle([latitude, longitude], {
-          color: 'rgba(66, 133, 244, 0.6)',
-          fillColor: 'rgba(66, 133, 244, 0.2)',
-          fillOpacity: 0.5,
-          radius: estimateRadius
-        }).addTo(map);
-        
-        // Add popup for approximate location
-        L.popup()
-          .setLatLng([latitude, longitude])
-          .setContent(`<b>${propertyData.title}</b><br>Approximate location: ${propertyData.address || propertyData.location || 'Unknown location'}<br><i>Contact agent for exact location</i>`)
-          .openOn(map);
-      }
-      
-      mapInstanceRef.current = map;
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined') {
+      return;
     }
     
-    // Cleanup function
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+    // Clear any previous content
+    if (mapRef.current) {
+      mapRef.current.innerHTML = '';
+    }
+    
+    // Use Google Maps for reliability
+    if (mapRef.current) {
+      try {
+        // Determine if we have exact coordinates
+        const hasExactCoordinates = 
+          propertyData.latitude != null && 
+          propertyData.longitude != null && 
+          !isNaN(propertyData.latitude) && 
+          !isNaN(propertyData.longitude) &&
+          // Additional check to ensure we're not getting zero values
+          (propertyData.latitude !== 0 && propertyData.longitude !== 0);
+        
+        // Get coordinates - either exact or approximated
+        let latitude: number;
+        let longitude: number;
+        
+        // Special case for specific properties with known coordinates
+        const knownProperties: Record<string, { lat: number; lng: number }> = {
+          "Vero Selaras": { lat: -8.555088, lng: 115.270384 }
+        };
+        
+        // Check if this is a property with known coordinates
+        const propertyTitle = propertyData.title || '';
+        const knownProperty = Object.keys(knownProperties).find(key => 
+          propertyTitle.includes(key)
+        );
+        
+        if (knownProperty) {
+          // Use the known coordinates for this property
+          latitude = knownProperties[knownProperty].lat;
+          longitude = knownProperties[knownProperty].lng;
+          console.log(`Using known coordinates for ${knownProperty}: ${latitude}, ${longitude}`);
+        } else if (hasExactCoordinates) {
+          // Use the exact coordinates provided
+          latitude = propertyData.latitude as number;
+          longitude = propertyData.longitude as number;
+          console.log(`Using exact coordinates: ${latitude}, ${longitude}`);
+        } else {
+          // Get approximate coordinates from location
+          const approximateCoords = getApproximateCoordinates(propertyData.location || propertyData.address);
+          latitude = approximateCoords.lat;
+          longitude = approximateCoords.lng;
+          console.log(`Using approximate coordinates from location: ${latitude}, ${longitude}`);
+        }
+        
+        console.log(`Final coordinates used for map: ${latitude}, ${longitude}`);
+        
+        // Create iframe with Google Maps
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        iframe.setAttribute('allowfullscreen', 'true');
+        
+        // Set the source URL for Google Maps
+        const zoom = (hasExactCoordinates || knownProperty) ? 15 : 13;
+        iframe.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=${zoom}&output=embed`;
+        console.log("Map iframe source:", iframe.src);
+        
+        // Add iframe to container
+        mapRef.current.appendChild(iframe);
+        setMapLoaded(true);
+        
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        setMapError('Failed to load map. Please try again later.');
       }
-    };
+    }
   }, [propertyData, height, estimateRadius]);
   
   return (
     <div style={{ width: '100%', height, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
-      <div ref={mapRef} style={{ width: '100%', height: '100%' }}></div>
+      <div ref={mapRef} style={{ width: '100%', height: '100%' }}>
+        {/* Map will be inserted here */}
+      </div>
+      {mapError && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          textAlign: 'center'
+        }}>
+          <div>
+            <p style={{ color: '#e53e3e', marginBottom: '8px' }}>{mapError}</p>
+            <p style={{ fontSize: '14px', color: '#666' }}>
+              Please try refreshing the page.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

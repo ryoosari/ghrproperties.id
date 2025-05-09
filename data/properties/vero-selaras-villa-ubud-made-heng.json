@@ -1494,8 +1494,8 @@
   "propertyLocation": {
     "id": 7,
     "address": "Jl. Situbanda, MAS, Kecamatan Ubud, Kabupaten Gianyar, Bali 80571",
-    "latitude": -8.555088,
-    "longitude": 115.270384,
+    "latitude": null,
+    "longitude": null,
     "mapUrl": null
   },
   "Amenities": [

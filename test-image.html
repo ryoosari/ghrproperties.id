@@ -1,116 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Property Image Test</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        .image-container {
-            margin-bottom: 30px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .image-container h2 {
-            margin-top: 0;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .url {
-            font-family: monospace;
-            background-color: #f5f5f5;
-            padding: 8px;
-            border-radius: 4px;
-            word-break: break-all;
-            margin: 10px 0;
-        }
-        .success {
-            color: green;
-            font-weight: bold;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+  <title>Image Path Test</title>
+  <script src="/image-converter.js" defer></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .image-test {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .image-container {
+      max-width: 400px;
+      margin-bottom: 10px;
+    }
+    .image-container img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #eee;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      overflow-x: auto;
+      border-radius: 3px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .button {
+      padding: 8px 16px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    .button:hover {
+      background-color: #3a80d2;
+    }
+  </style>
 </head>
 <body>
-    <h1>Property Image Test</h1>
-    <p>This page tests if the property images can be displayed directly in the browser.</p>
-    
+  <h1>Image Path Testing</h1>
+  
+  <h2>1. Placeholder Image</h2>
+  <div class="image-test">
     <div class="image-container">
-        <h2>Original URL</h2>
-        <div class="url">/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
-        <img src="/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
-             alt="Property Image - Original" 
-             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with original URL</p>';"
-             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with original URL</p>';">
+      <img src="/placeholder-property.jpg" alt="Placeholder" id="placeholder-image">
     </div>
-    
+    <p>Path: <code>/placeholder-property.jpg</code></p>
+    <div id="placeholder-status"></div>
+  </div>
+  
+  <h2>2. Property Image from Direct Path</h2>
+  <div class="image-test">
     <div class="image-container">
-        <h2>Relative URL with Strapi Prefix</h2>
-        <div class="url">http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
-        <img src="http://localhost:1337/uploads/Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
-             alt="Property Image - With Prefix" 
-             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with Strapi prefix</p>';"
-             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with Strapi prefix</p>';">
+      <img src="/property-images/vero-selaras-villa-ubud-made-heng/large-large_Exterior_1_5968f3b2b7.jpg" alt="Property Direct" id="direct-image">
     </div>
-    
+    <p>Path: <code>/property-images/vero-selaras-villa-ubud-made-heng/large-large_Exterior_1_5968f3b2b7.jpg</code></p>
+    <div id="direct-status"></div>
+  </div>
+  
+  <h2>3. Property Image from Mapped Strapi URL</h2>
+  <div class="image-test">
     <div class="image-container">
-        <h2>Large Format URL</h2>
-        <div class="url">http://localhost:1337/uploads/large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
-        <img src="http://localhost:1337/uploads/large_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
-             alt="Property Image - Large Format" 
-             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with large format URL</p>';"
-             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with large format URL</p>';">
+      <img src="http://localhost:1337/uploads/large_Exterior_1_5968f3b2b7.jpg" alt="Mapped" id="mapped-image">
     </div>
-    
-    <div class="image-container">
-        <h2>Medium Format URL</h2>
-        <div class="url">http://localhost:1337/uploads/medium_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
-        <img src="http://localhost:1337/uploads/medium_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
-             alt="Property Image - Medium Format" 
-             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with medium format URL</p>';"
-             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with medium format URL</p>';">
-    </div>
-    
-    <div class="image-container">
-        <h2>Thumbnail Format URL</h2>
-        <div class="url">http://localhost:1337/uploads/thumbnail_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg</div>
-        <img src="http://localhost:1337/uploads/thumbnail_Whats_App_Image_2025_03_07_at_12_21_31_1_c23417a133.jpeg" 
-             alt="Property Image - Thumbnail Format" 
-             onerror="this.onerror=null; this.parentNode.innerHTML += '<p class=\'error\'>❌ Failed to load image with thumbnail format URL</p>';"
-             onload="this.parentNode.innerHTML += '<p class=\'success\'>✅ Image loaded successfully with thumbnail format URL</p>';">
-    </div>
-    
-    <script>
-        // Add a message about the test results
-        window.onload = function() {
-            const successElements = document.querySelectorAll('.success');
-            const errorElements = document.querySelectorAll('.error');
-            
-            const resultsDiv = document.createElement('div');
-            resultsDiv.innerHTML = `
-                <h2>Test Results</h2>
-                <p>Images loaded successfully: ${successElements.length}</p>
-                <p>Images failed to load: ${errorElements.length}</p>
-            `;
-            
-            document.body.appendChild(resultsDiv);
+    <p>Strapi URL: <code>http://localhost:1337/uploads/large_Exterior_1_5968f3b2b7.jpg</code></p>
+    <p>Should map to: <code>/property-images/vero-selaras-villa-ubud-made-heng/large-large_Exterior_1_5968f3b2b7.jpg</code></p>
+    <div id="mapped-status"></div>
+  </div>
+  
+  <h2>4. Check All Mappings</h2>
+  <div class="image-test">
+    <button id="check-mappings" class="button">Check All Mappings</button>
+    <div id="mappings-results"></div>
+  </div>
+  
+  <script>
+    // Wait for the converter script to load
+    window.addEventListener('load', function() {
+      // Test the converted URL
+      setTimeout(() => {
+        // Test placeholder
+        const placeholderImg = document.getElementById('placeholder-image');
+        placeholderImg.onload = () => {
+          document.getElementById('placeholder-status').innerHTML = '<span class="success">✓ Placeholder loaded successfully</span>';
         };
-    </script>
+        placeholderImg.onerror = () => {
+          document.getElementById('placeholder-status').innerHTML = '<span class="error">✗ Placeholder failed to load</span>';
+        };
+        
+        // Test direct image
+        const directImg = document.getElementById('direct-image');
+        directImg.onload = () => {
+          document.getElementById('direct-status').innerHTML = '<span class="success">✓ Direct image loaded successfully</span>';
+        };
+        directImg.onerror = () => {
+          document.getElementById('direct-status').innerHTML = '<span class="error">✗ Direct image failed to load</span>';
+        };
+        
+        // Test mapped image
+        const mappedImg = document.getElementById('mapped-image');
+        mappedImg.onload = () => {
+          const mappedSrc = mappedImg.getAttribute('src');
+          document.getElementById('mapped-status').innerHTML = 
+            `<span class="success">✓ Mapped image loaded successfully</span><br>
+             <p>Current src: <code>${mappedSrc}</code></p>`;
+        };
+        mappedImg.onerror = () => {
+          document.getElementById('mapped-status').innerHTML = '<span class="error">✗ Mapped image failed to load</span>';
+        };
+        
+        // Check button 
+        document.getElementById('check-mappings').addEventListener('click', function() {
+          const results = document.getElementById('mappings-results');
+          
+          if (!window.imageUrlMappings) {
+            results.innerHTML = '<p class="error">Error: Image mappings not loaded</p>';
+            return;
+          }
+          
+          const firstThree = Object.entries(window.imageUrlMappings).slice(0, 3);
+          let html = '<p>First 3 mappings:</p><ul>';
+          
+          firstThree.forEach(([original, mapped]) => {
+            html += `<li>
+              <p><code>${original}</code> → <code>${mapped}</code></p>
+              <div class="image-container">
+                <img src="${mapped}" alt="Mapped image" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <div style="display:none;color:red;padding:40px;text-align:center;background:#f5f5f5;">Image failed to load</div>
+              </div>
+            </li>`;
+          });
+          
+          html += '</ul>';
+          html += `<p>Total mappings: ${Object.keys(window.imageUrlMappings).length}</p>`;
+          
+          results.innerHTML = html;
+        });
+        
+      }, 500);
+    });
+  </script>
 </body>
 </html> 

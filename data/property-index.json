@@ -15,5 +15,22 @@
       "bathrooms": 3,
       "area": 100
     }
+  },
+  {
+    "id": 10,
+    "attributes": {
+      "title": "Vero Soluna: 3BR Hideaway",
+      "slug": "vero-soluna-3br-hideaway",
+      "status": "For Rent",
+      "createdAt": "2025-05-20T22:26:21.156Z",
+      "updatedAt": "2025-05-20T22:26:21.156Z",
+      "price": 330000000,
+      "propertyType": "House",
+      "image": "/uploads/BA_1_1_f13f17ae17.jpeg",
+      "location": "Kuta, Bali",
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "area": 100
+    }
   }
 ]

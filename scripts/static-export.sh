@@ -3,80 +3,33 @@
 # Static Export Script
 # This script builds a static export of the Next.js application
 
+set -e
+
 echo "🚀 Starting static export process..."
 
-# Ensure script is executable
-chmod +x scripts/export-strapi-data.mjs
+# First check if we have pre-exported data
+echo "✅ Using existing pre-committed data files"
+DATA_SUMMARY=$(cat data/summary.json 2>/dev/null || echo '{"exportedAt": "N/A", "stats": {"properties": 0}}')
+echo "📊 Data summary:"
+echo $DATA_SUMMARY
 
-# Ensure data directories exist and have proper permissions
-mkdir -p data/properties data/snapshot
-chmod -R 755 data
-
-# Check for pre-committed data files first, then try to export data from Strapi
-if [ ! -f "data/processed-properties.json" ] || [ ! -s "data/processed-properties.json" ]; then
-  echo "📂 No property data found or empty file. Attempting to export data..."
-  
-  # Check for required environment variables
-  if [ -z "$NEXT_PUBLIC_STRAPI_URL" ] || [ -z "$NEXT_PUBLIC_STRAPI_API_TOKEN" ]; then
-    echo "⚠️ NEXT_PUBLIC_STRAPI_URL or NEXT_PUBLIC_STRAPI_API_TOKEN not set"
-    echo "⚠️ Creating fallback empty data files instead of attempting to export"
-    
-    # Create empty processed-properties.json
-    echo "[]" > data/processed-properties.json
-    
-    # Create empty property-index.json
-    echo "[]" > data/property-index.json
-    
-    # Create empty properties.json
-    echo "[]" > data/properties.json
-    
-    # Create metadata.json with current timestamp
-    echo "{\"exportedAt\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"stats\": {\"properties\": 0}, \"source\": \"fallback\"}" > data/metadata.json
-    
-    # Create last-updated.json
-    echo "{\"lastUpdated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > data/last-updated.json
-  else
-    # Try to run export data, but continue with empty data if it fails
-    npm run export-data || {
-      echo "⚠️ Strapi export failed, creating fallback empty data files"
-      
-      # Create empty processed-properties.json
-      echo "[]" > data/processed-properties.json
-      
-      # Create empty property-index.json
-      echo "[]" > data/property-index.json
-      
-      # Create empty properties.json
-      echo "[]" > data/properties.json
-      
-      # Create metadata.json with current timestamp
-      echo "{\"exportedAt\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"stats\": {\"properties\": 0}, \"source\": \"fallback\"}" > data/metadata.json
-      
-      # Create last-updated.json
-      echo "{\"lastUpdated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > data/last-updated.json
-    }
-  fi
-else
-  echo "✅ Using existing pre-committed data files"
-  
-  # Show data summary
-  if [ -f "data/metadata.json" ]; then
-    echo "📊 Data summary:"
-    cat data/metadata.json
-  fi
-fi
-
-# Run the static export
+# Create an export for production
 echo "🔨 Building static export..."
-NEXT_PUBLIC_STATIC_EXPORT=true next build
+npm run build
 
-# Check build result
-if [ $? -eq 0 ]; then
-  echo "✅ Static export build completed successfully"
-else
-  echo "❌ Static export build failed"
-  exit 1
-fi
+# Copy the result to the out directory
+echo "✅ Static export build completed successfully"
+
+# Make sure property images are present in the output directory
+node scripts/download-images.js
+
+# Fix any missing images with placeholders
+node scripts/fix-missing-images.js
+
+# ADDITIONAL FIX: Copy server chunks that might be missing from the static export
+mkdir -p out/_next/static/chunks
+cp -f .next/server/chunks/572.js out/_next/static/chunks/ 2>/dev/null || true
+cp -f .next/server/chunks/*.js out/_next/static/chunks/ 2>/dev/null || true
 
 echo "🎉 Static export process complete"
 echo "   Output is available in the 'out' directory" 

@@ -1,6 +1,13 @@
 import axios from 'axios';
 import qs from 'qs';
 
+// Declare window interface for TypeScript
+// @ts-ignore
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.convertImageUrl = window.convertImageUrl || function(url) { return url; };
+}
+
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
@@ -260,11 +267,38 @@ export function getStrapiMediaUrl(media, format = '') {
         return '/placeholder-property.jpg';
       }
       
+      // Check if we can use the client-side converter
+      if (typeof window !== 'undefined' && window.convertImageUrl && imageObj.url) {
+        const originalUrl = imageObj.url.startsWith('/') 
+          ? `${STRAPI_URL}${imageObj.url}` 
+          : imageObj.url;
+          
+        // Try to convert using the client-side converter
+        const convertedUrl = window.convertImageUrl(originalUrl);
+        if (convertedUrl !== originalUrl) {
+          console.log(`Converted image URL using client-side converter: ${originalUrl} -> ${convertedUrl}`);
+          return convertedUrl;
+        }
+      }
+      
       // If format is specified and available, use it
       if (format && 
           imageObj.formats && 
           imageObj.formats[format] && 
           imageObj.formats[format].url) {
+        
+        // Check if this URL can be converted client-side
+        if (typeof window !== 'undefined' && window.convertImageUrl) {
+          const formatUrl = imageObj.formats[format].url;
+          const fullUrl = formatUrl.startsWith('/') ? `${STRAPI_URL}${formatUrl}` : formatUrl;
+          const convertedUrl = window.convertImageUrl(fullUrl);
+          
+          if (convertedUrl !== fullUrl) {
+            console.log(`Converted format URL: ${fullUrl} -> ${convertedUrl}`);
+            return convertedUrl;
+          }
+        }
+        
         const formatUrl = imageObj.formats[format].url;
         const fullUrl = formatUrl.startsWith('/') ? `${STRAPI_URL}${formatUrl}` : formatUrl;
         return fullUrl;
@@ -272,6 +306,19 @@ export function getStrapiMediaUrl(media, format = '') {
       
       // Otherwise use original image URL
       if (imageObj.url) {
+        // Check if this URL can be converted client-side
+        if (typeof window !== 'undefined' && window.convertImageUrl) {
+          const originalUrl = imageObj.url.startsWith('/') 
+            ? `${STRAPI_URL}${imageObj.url}` 
+            : imageObj.url;
+          const convertedUrl = window.convertImageUrl(originalUrl);
+          
+          if (convertedUrl !== originalUrl) {
+            console.log(`Converted URL: ${originalUrl} -> ${convertedUrl}`);
+            return convertedUrl;
+          }
+        }
+        
         const fullUrl = imageObj.url.startsWith('/') ? `${STRAPI_URL}${imageObj.url}` : imageObj.url;
         return fullUrl;
       }
@@ -283,6 +330,19 @@ export function getStrapiMediaUrl(media, format = '') {
     if (media && typeof media === 'object') {
       // If it's a direct media object with url
       if (media.url) {
+        // Check if this URL can be converted client-side
+        if (typeof window !== 'undefined' && window.convertImageUrl) {
+          const originalUrl = media.url.startsWith('/') 
+            ? `${STRAPI_URL}${media.url}` 
+            : media.url;
+          const convertedUrl = window.convertImageUrl(originalUrl);
+          
+          if (convertedUrl !== originalUrl) {
+            console.log(`Converted single URL: ${originalUrl} -> ${convertedUrl}`);
+            return convertedUrl;
+          }
+        }
+        
         const fullUrl = media.url.startsWith('/') ? `${STRAPI_URL}${media.url}` : media.url;
         return fullUrl;
       }
@@ -292,6 +352,19 @@ export function getStrapiMediaUrl(media, format = '') {
           media.formats && 
           media.formats[format] && 
           media.formats[format].url) {
+          
+        // Check if this URL can be converted client-side
+        if (typeof window !== 'undefined' && window.convertImageUrl) {
+          const formatUrl = media.formats[format].url;
+          const fullUrl = formatUrl.startsWith('/') ? `${STRAPI_URL}${formatUrl}` : formatUrl;
+          const convertedUrl = window.convertImageUrl(fullUrl);
+          
+          if (convertedUrl !== fullUrl) {
+            console.log(`Converted format URL for single media: ${fullUrl} -> ${convertedUrl}`);
+            return convertedUrl;
+          }
+        }
+          
         const formatUrl = media.formats[format].url;
         const fullUrl = formatUrl.startsWith('/') ? `${STRAPI_URL}${formatUrl}` : formatUrl;
         return fullUrl;
@@ -305,6 +378,18 @@ export function getStrapiMediaUrl(media, format = '') {
         const dataObj = media.data[0];
         if (dataObj && dataObj.attributes && dataObj.attributes.url) {
           const { url } = dataObj.attributes;
+          
+          // Check if this URL can be converted client-side
+          if (typeof window !== 'undefined' && window.convertImageUrl) {
+            const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
+            const convertedUrl = window.convertImageUrl(fullUrl);
+            
+            if (convertedUrl !== fullUrl) {
+              console.log(`Converted legacy data URL: ${fullUrl} -> ${convertedUrl}`);
+              return convertedUrl;
+            }
+          }
+          
           const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
           return fullUrl;
         }
@@ -313,6 +398,18 @@ export function getStrapiMediaUrl(media, format = '') {
       // Handle single object in data
       if (media.data.attributes && media.data.attributes.url) {
         const { url } = media.data.attributes;
+        
+        // Check if this URL can be converted client-side
+        if (typeof window !== 'undefined' && window.convertImageUrl) {
+          const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
+          const convertedUrl = window.convertImageUrl(fullUrl);
+          
+          if (convertedUrl !== fullUrl) {
+            console.log(`Converted legacy single data URL: ${fullUrl} -> ${convertedUrl}`);
+            return convertedUrl;
+          }
+        }
+        
         const fullUrl = url.startsWith('/') ? `${STRAPI_URL}${url}` : url;
         return fullUrl;
       }

@@ -5,6 +5,10 @@ import '@/styles/globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import CacheRefresher from '@/components/CacheRefresher';
 import { NoHydration } from '@/components/NoHydration';
+import dynamic from 'next/dynamic';
+
+// Import the ImageConverter component dynamically with no SSR
+const ImageConverter = dynamic(() => import('@/components/ImageConverter'), { ssr: false });
 
 const inter = Inter({
   subsets: ['latin'],
@@ -49,6 +53,10 @@ export default function RootLayout({
           <NoHydration>
             <CacheRefresher />
           </NoHydration>
+          
+          {/* Add the ImageConverter component to fix image URLs client-side */}
+          <ImageConverter />
+          
           {children}
         </ThemeProvider>
       </body>

@@ -1,10 +1,10 @@
 {
-  "id": 7,
+  "id": 8,
   "documentId": "mrhxlq06o7hz31wv0j9tbmw7",
   "Title": "Vero Selaras: Villa Ubud Made Heng",
   "createdAt": "2025-04-14T18:50:24.201Z",
-  "updatedAt": "2025-04-14T20:53:46.081Z",
-  "publishedAt": "2025-04-14T20:53:46.094Z",
+  "updatedAt": "2025-04-18T12:52:35.782Z",
+  "publishedAt": "2025-04-18T12:52:35.800Z",
   "Description": null,
   "IsFeatured": true,
   "Price": 440000000,
@@ -1492,47 +1492,47 @@
     "publishedAt": "2025-04-14T18:47:17.482Z"
   },
   "propertyLocation": {
-    "id": 7,
+    "id": 8,
     "address": "Jl. Situbanda, MAS, Kecamatan Ubud, Kabupaten Gianyar, Bali 80571",
-    "latitude": null,
-    "longitude": null,
+    "latitude": -8.555088,
+    "longitude": 115.270384,
     "mapUrl": null
   },
   "Amenities": [
     {
-      "id": 34,
+      "id": 43,
       "amenityName": "Swimming Pool"
     },
     {
-      "id": 35,
+      "id": 44,
       "amenityName": "Parking"
     },
     {
-      "id": 36,
+      "id": 45,
       "amenityName": "Air Conditioning"
     },
     {
-      "id": 37,
+      "id": 46,
       "amenityName": "WiFi"
     },
     {
-      "id": 38,
+      "id": 47,
       "amenityName": "Kitchen"
     },
     {
-      "id": 39,
+      "id": 48,
       "amenityName": "TV"
     },
     {
-      "id": 40,
+      "id": 49,
       "amenityName": "Balcony"
     },
     {
-      "id": 41,
+      "id": 50,
       "amenityName": "Rice Field View"
     },
     {
-      "id": 42,
+      "id": 51,
       "amenityName": "Living Room"
     }
   ]

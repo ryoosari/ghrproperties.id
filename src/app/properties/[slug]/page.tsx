@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getPropertyBySlug as getStaticPropertyBySlug, getAllProperties } from '@/utils/snapshot';
 import { getPropertyBySlug as getStrapiPropertyBySlug, getStrapiMediaUrl } from '@/lib/strapi';
+import { getRelatedProperties } from '@/lib/properties';
 import { notFound } from 'next/navigation';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
@@ -16,6 +17,7 @@ import CopyLinkButton from '@/components/CopyLinkButton';
 import SaveButton from '@/components/SaveButton';
 import PrintButton from '@/components/PrintButton';
 import PropertyGallerySection from '@/components/PropertyGallerySection';
+import PropertyCard from '@/components/property-card';
 
 // Import the map component dynamically
 const DynamicMap = dynamic(() => import('@/components/dynamic-map'), { ssr: false });
@@ -385,6 +387,30 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
     slug: strapiProperty.Slug || strapiProperty.slug || `property-${strapiProperty.id ? String(strapiProperty.id) : Date.now()}`
   };
   
+  // Fetch similar properties
+  let similarProperties = [];
+  try {
+    const related = await getRelatedProperties(normalizedProperty.id, 3);
+    
+    // Make sure we're getting properly formatted property objects
+    similarProperties = related
+      .filter((property: any) => property && (property.id || property.attributes))
+      .map((property: any) => {
+        // If it's already a normalized property, use it directly
+        if (property.title && property.featured_image) {
+          return property;
+        }
+        
+        // Otherwise normalize it
+        return normalizePropertyData(property);
+      });
+      
+    console.log(`Found ${similarProperties.length} similar properties`);
+  } catch (error) {
+    console.error('Error fetching similar properties:', error);
+    // Keep empty array if there's an error
+  }
+
   return (
     <main className="flex min-h-screen flex-col">
       <Header />
@@ -772,39 +798,18 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
         <div className="container">
           <h2 className="text-2xl font-bold mb-8 text-center">Similar Properties You May Like</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* This would ideally be populated with actual similar properties from your database */}
-            {/* I'm showing static placeholders for demonstration */}
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
-                <div className="relative h-56 bg-gray-100 overflow-hidden">
-                  <div className="aspect-w-16 aspect-h-9 bg-gray-200 animate-pulse" />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-primary text-white text-xs font-medium px-2 py-1 rounded-md">
-                      Similar
-                    </span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-bold text-xl truncate mb-2">Similar Property {item}</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex items-center">
-                    <FaMapMarkerAlt className="text-primary mr-2" size={14} />
-                    Similar Location
-                  </p>
-                  <div className="flex items-center justify-between mt-6">
-                    <p className="text-primary font-bold">Contact for Price</p>
-                    <Link 
-                      href="/properties" 
-                      className="text-sm font-medium text-primary hover:text-primary-dark transition-colors flex items-center"
-                    >
-                      View Details 
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
+            {similarProperties && similarProperties.length > 0 ? (
+              similarProperties.map((property: any) => (
+                <PropertyCard 
+                  key={property.id || `similar-${Math.random().toString(36).substring(7)}`} 
+                  property={property} 
+                />
+              ))
+            ) : (
+              <div className="md:col-span-3 p-8 bg-white rounded-lg shadow text-center">
+                <p className="text-gray-500">No similar properties found at this time.</p>
               </div>
-            ))}
+            )}
           </div>
           <div className="text-center mt-12">
             <Link 
@@ -839,37 +844,32 @@ function normalizePropertyData(property: any) {
     let featuredImageUrl = '/placeholder-property.jpg';
     let galleryImages: string[] = [];
     
-    // Use MainImage as featured image if available
-    if (attributes.MainImage && attributes.MainImage.url) {
-      const mainImageUrl = attributes.MainImage.url;
-      const mainImageFilename = mainImageUrl.split('/').pop();
+    // Specific handling for properties with missing images (like Vero Soluna)
+    if (propertySlug === 'vero-soluna-3br-hideaway') {
+      featuredImageUrl = `${localImageBasePath}/large-placeholder.jpg`;
       
-      if (mainImageFilename) {
-        featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
+      // Create some placeholder gallery images
+      for (let i = 0; i < 4; i++) {
+        galleryImages.push(`${localImageBasePath}/large-placeholder.jpg`);
       }
-    } 
-    // Fall back to first image from Image array
-    else if (attributes.Image && Array.isArray(attributes.Image) && attributes.Image.length > 0) {
-      const firstImage = attributes.Image[0];
-      if (firstImage && firstImage.url) {
-        const firstImageUrl = firstImage.url;
-        const firstImageFilename = firstImageUrl.split('/').pop();
-        
-        if (firstImageFilename) {
-          featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
-        }
+    } else {
+      // Use MainImage as featured image if available
+      if (attributes.MainImage && attributes.MainImage.url) {
+        const imgUrl = attributes.MainImage.url;
+        const imgFilename = imgUrl.split('/').pop();
+        featuredImageUrl = `${localImageBasePath}/large-large_${imgFilename}`;
       }
-    }
-    
-    // Extract gallery images from Image array
-    if (attributes.Image && Array.isArray(attributes.Image)) {
-      galleryImages = attributes.Image
-        .filter(img => img && img.url)
-        .map(img => {
-          const imgUrl = img.url;
-          const imgFilename = imgUrl.split('/').pop();
-          return `${localImageBasePath}/large-large_${imgFilename}`;
-        });
+      
+      // Extract gallery images from Image array
+      if (attributes.Image && Array.isArray(attributes.Image)) {
+        galleryImages = attributes.Image
+          .filter((img: any) => img && img.url)
+          .map((img: any) => {
+            const imgUrl = img.url;
+            const imgFilename = imgUrl.split('/').pop();
+            return `${localImageBasePath}/large-large_${imgFilename}`;
+          });
+      }
     }
     
     // Extract amenities if they exist - handle component structure
@@ -929,97 +929,94 @@ function normalizePropertyData(property: any) {
     };
   }
   
-  // If it's a Strapi property (direct properties), normalize it
-  // Extract featured image - prioritize MainImage if available
-  let featuredImageUrl = '/placeholder-property.jpg';
-  let galleryImages: string[] = [];
-  
-  // Use MainImage as featured image if available
-  if (property.MainImage && property.MainImage.url) {
-    const mainImageUrl = property.MainImage.url;
-    const mainImageFilename = mainImageUrl.split('/').pop();
+  // If it's a standard property object (not from Strapi), normalize it
+  else {
+    // Extract featured image URL - prioritize MainImage if available
+    let featuredImageUrl = '/placeholder-property.jpg';
+    let galleryImages: string[] = [];
     
-    if (mainImageFilename) {
-      featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
-    }
-  } 
-  // Fall back to first image from Image array
-  else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
-    const firstImage = property.Image[0];
-    if (firstImage && firstImage.url) {
-      const firstImageUrl = firstImage.url;
-      const firstImageFilename = firstImageUrl.split('/').pop();
+    // Specific handling for properties with missing images (like Vero Soluna)
+    if (propertySlug === 'vero-soluna-3br-hideaway') {
+      featuredImageUrl = `${localImageBasePath}/large-placeholder.jpg`;
       
-      if (firstImageFilename) {
-        featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
+      // Create some placeholder gallery images
+      for (let i = 0; i < 4; i++) {
+        galleryImages.push(`${localImageBasePath}/large-placeholder.jpg`);
+      }
+    } else {
+      // Use MainImage as featured image if available
+      if (property.MainImage && property.MainImage.url) {
+        const imgUrl = property.MainImage.url;
+        const imgFilename = imgUrl.split('/').pop();
+        featuredImageUrl = `${localImageBasePath}/large-large_${imgFilename}`;
+      }
+      
+      // Extract gallery images from Image array
+      if (property.Image && Array.isArray(property.Image)) {
+        galleryImages = property.Image
+          .filter((img: any) => img && img.url)
+          .map((img: any) => {
+            const imgUrl = img.url;
+            const imgFilename = imgUrl.split('/').pop();
+            return `${localImageBasePath}/large-large_${imgFilename}`;
+          });
       }
     }
-  }
-  
-  // Extract gallery images from Image array
-  if (property.Image && Array.isArray(property.Image)) {
-    galleryImages = property.Image
-      .filter(img => img && img.url)
-      .map(img => {
-        const imgUrl = img.url;
-        const imgFilename = imgUrl.split('/').pop();
-        return `${localImageBasePath}/large-large_${imgFilename}`;
-      });
-  }
-  
-  // Extract amenities from Strapi format - handle component structure
-  let amenities = [];
-  
-  // Handle component-based amenities (new format)
-  if (property.Amenities && Array.isArray(property.Amenities)) {
     
-    // Keep the original array to preserve the object structure
-    amenities = property.Amenities;
+    // Extract amenities from Strapi format - handle component structure
+    let amenities = [];
+    
+    // Handle component-based amenities (new format)
+    if (property.Amenities && Array.isArray(property.Amenities)) {
+      
+      // Keep the original array to preserve the object structure
+      amenities = property.Amenities;
 
-  } 
-  // Handle old format (direct string array)
-  else if (property.amenities && Array.isArray(property.amenities)) {
-    amenities = property.amenities;
-  }
-  
-  // Extract location details
-  let address = '';
-  let latitude = null;
-  let longitude = null;
-  
-  if (property.propertyLocation) {
-    const location = property.propertyLocation;
-    
-    // Use the single address field
-    address = location.address || '';
-    
-    // Extract coordinates
-    if (location.latitude && location.longitude) {
-      latitude = parseFloat(location.latitude);
-      longitude = parseFloat(location.longitude);
+    } 
+    // Handle old format (direct string array)
+    else if (property.amenities && Array.isArray(property.amenities)) {
+      amenities = property.amenities;
     }
-  }
+    
+    // Extract location details
+    let address = '';
+    let latitude = null;
+    let longitude = null;
+    
+    if (property.propertyLocation) {
+      const location = property.propertyLocation;
+      
+      // Use the single address field
+      address = location.address || '';
+      
+      // Extract coordinates
+      if (location.latitude && location.longitude) {
+        latitude = parseFloat(location.latitude);
+        longitude = parseFloat(location.longitude);
+      }
+    }
 
-  return {
-    id: property.id,
-    title: property.Title || 'Unnamed Property',
-    description: property.Description || '',
-    location: property.Location || 'Location not specified',
-    price: property.Price || 0,
-    bedrooms: property.Bedrooms || 0,
-    bathrooms: property.Bathrooms || 0,
-    area: property.Area || property.square_footage || 'N/A',
-    property_type: property.PropertyType || 'Property',
-    status: property.Status || 'unlisted',
-    kitchen: property.Kitchen || 1,
-    living_room: property.LivingRoom || 1,
-    featured_image: featuredImageUrl,
-    gallery_images: galleryImages,
-    amenities: amenities,
-    slug: property.Slug || property.slug,
-    // Add location details
-    address: address,
-    latitude: latitude,
-    longitude: longitude
-  };
+    return {
+      id: property.id,
+      title: property.Title || 'Unnamed Property',
+      description: property.Description || '',
+      location: property.Location || 'Location not specified',
+      price: property.Price || 0,
+      bedrooms: property.Bedrooms || 0,
+      bathrooms: property.Bathrooms || 0,
+      area: property.Area || property.square_footage || 'N/A',
+      property_type: property.PropertyType || 'Property',
+      status: property.Status || 'unlisted',
+      kitchen: property.Kitchen || 1,
+      living_room: property.LivingRoom || 1,
+      featured_image: featuredImageUrl,
+      gallery_images: galleryImages,
+      amenities: amenities,
+      slug: property.Slug || property.slug,
+      // Add location details
+      address: address,
+      latitude: latitude,
+      longitude: longitude
+    };
+  }
 } 

@@ -4,6 +4,14 @@ import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaSearch, FaSwimmingPool, FaPar
 import { cn } from '@/utils/cn';
 import { getStrapiMediaUrl } from '@/lib/strapi';
 import { formatPrice } from '@/lib/formatters';
+import ClientImage from './client-image';
+
+// Extend Window interface to include convertImageUrl
+declare global {
+  interface Window {
+    convertImageUrl?: (url: string) => string;
+  }
+}
 
 // Define a more flexible property interface that can handle both static and Strapi data
 interface Property {
@@ -193,46 +201,110 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
   }
   // Check for MainImage first (new field)
   else if (property.MainImage) {
-    // Use local image mapping for MainImage
-    const propertySlug = slug;
-    const mainImageUrl = property.MainImage.url;
-    
-    if (mainImageUrl) {
-      const mainImageFilename = mainImageUrl.split('/').pop();
-      if (mainImageFilename) {
-        imageUrl = `/property-images/${propertySlug}/large-large_${mainImageFilename}`;
-        imageSourceType = 'from-local-main-image';
-      } else {
-        // Fallback to Strapi URL if filename can't be extracted
-        imageUrl = getStrapiMediaUrl(property.MainImage);
-        imageSourceType = 'from-main-image';
+    // Check if MainImage has a url property
+    if (property.MainImage.url) {
+      const mainImageUrl = property.MainImage.url;
+      
+      // Handle already local URLs
+      if (mainImageUrl.startsWith('/property-images/')) {
+        imageUrl = mainImageUrl;
+        imageSourceType = 'from-local-main-image-direct';
+      } 
+      // Handle remote URLs that need to be converted to local path
+      else if (mainImageUrl.includes('localhost:1337/uploads/')) {
+        // Try to use the image-mappings.json approach
+        const propertySlug = slug;
+        const mainImageFilename = mainImageUrl.split('/').pop();
+        
+        if (mainImageFilename) {
+          const possibleFormats = ['large', 'medium', 'small', 'original'];
+          for (const format of possibleFormats) {
+            const localPath = `/property-images/${propertySlug}/${format}-${mainImageFilename}`;
+            // Use the first format we think exists
+            imageUrl = localPath;
+            imageSourceType = `from-mapped-main-image-${format}`;
+            break;
+          }
+        } else {
+          // Fallback to direct Strapi URL
+          imageUrl = mainImageUrl.startsWith('/') ? 
+            `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${mainImageUrl}` : 
+            mainImageUrl;
+          imageSourceType = 'from-remote-main-image-direct';
+        }
+      } 
+      // For fully qualified URLs, use as is
+      else {
+        imageUrl = mainImageUrl;
+        imageSourceType = 'from-main-image-url';
       }
-    } else {
-      // Fallback to Strapi URL if no URL in MainImage
+    } 
+    // Fallback to Strapi URL if no direct URL
+    else {
       imageUrl = getStrapiMediaUrl(property.MainImage);
-      imageSourceType = 'from-main-image';
+      imageSourceType = 'from-main-image-func';
     }
   }
   // Then check other image formats
   else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
-    // Use local image mapping for Image array
-    const propertySlug = slug;
-    const firstImageUrl = property.Image[0].url;
+    const firstImage = property.Image[0];
     
-    if (firstImageUrl) {
-      const firstImageFilename = firstImageUrl.split('/').pop();
-      if (firstImageFilename) {
-        imageUrl = `/property-images/${propertySlug}/large-large_${firstImageFilename}`;
-        imageSourceType = 'from-local-image-array';
-      } else {
-        // Fallback to Strapi URL if filename can't be extracted
-        imageUrl = getStrapiMediaUrl(property.Image, 'medium');
-        imageSourceType = 'from-array';
+    // Check if first image has direct URL
+    if (firstImage.url) {
+      const firstImageUrl = firstImage.url;
+      
+      // Handle already local URLs
+      if (firstImageUrl.startsWith('/property-images/')) {
+        imageUrl = firstImageUrl;
+        imageSourceType = 'from-local-image-array-direct';
+      } 
+      // Handle remote URLs that need to be converted to local path
+      else if (firstImageUrl.includes('localhost:1337/uploads/')) {
+        // Try to use the image-mappings.json approach
+        const propertySlug = slug;
+        const firstImageFilename = firstImageUrl.split('/').pop();
+        
+        if (firstImageFilename) {
+          const possibleFormats = ['large', 'medium', 'small', 'original'];
+          for (const format of possibleFormats) {
+            const localPath = `/property-images/${propertySlug}/${format}-${firstImageFilename}`;
+            // Use the first format we think exists
+            imageUrl = localPath;
+            imageSourceType = `from-mapped-image-array-${format}`;
+            break;
+          }
+        } else {
+          // Fallback to direct Strapi URL
+          imageUrl = firstImageUrl.startsWith('/') ? 
+            `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${firstImageUrl}` : 
+            firstImageUrl;
+          imageSourceType = 'from-remote-image-array-direct';
+        }
+      } 
+      // For fully qualified URLs, use as is
+      else {
+        imageUrl = firstImageUrl;
+        imageSourceType = 'from-image-array-url';
       }
-    } else {
-      // Fallback to Strapi URL if no URL in first image
+    } 
+    // Use formats if available
+    else if (firstImage.formats && (firstImage.formats.large || firstImage.formats.medium)) {
+      const formatUrl = firstImage.formats.large?.url || firstImage.formats.medium?.url;
+      if (formatUrl) {
+        imageUrl = formatUrl.startsWith('/') ? 
+          `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${formatUrl}` : 
+          formatUrl;
+        imageSourceType = 'from-image-formats';
+      } else {
+        // Fallback to getStrapiMediaUrl
+        imageUrl = getStrapiMediaUrl(property.Image, 'medium');
+        imageSourceType = 'from-array-func';
+      }
+    }
+    // Fallback to getStrapiMediaUrl
+    else {
       imageUrl = getStrapiMediaUrl(property.Image, 'medium');
-      imageSourceType = 'from-array';
+      imageSourceType = 'from-array-func-fallback';
     }
   } else if (property.images && property.images.data) {
     // Legacy Strapi format
@@ -248,6 +320,15 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
     imageSourceType = 'from-featured';
   }
 
+  // Try to apply mapping from image-mappings.json if URL is a Strapi URL
+  if (imageUrl.includes('localhost:1337/uploads/') && typeof window !== 'undefined' && window.convertImageUrl) {
+    const mappedUrl = window.convertImageUrl(imageUrl);
+    if (mappedUrl && mappedUrl !== imageUrl) {
+      imageUrl = mappedUrl;
+      imageSourceType += '-mapped';
+    }
+  }
+
   // Log image info - remove in production
   if (typeof window !== 'undefined') {
     console.log('PropertyCard image:', { 
@@ -260,12 +341,11 @@ export default function PropertyCard({ property, className }: PropertyCardProps)
     <Link href={`/properties/${slug}`} className="block">
       <div className={cn("bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300", className)}>
         <div className="relative h-64 overflow-hidden group">
-          {/* Use next/image if it's a valid URL, otherwise fall back to img tag */}
-          {imageUrl.startsWith('http') || imageUrl.startsWith('/') ? (
-            <Image
+          {/* Ensure the Image component gets a proper URL */}
+          {(imageUrl.startsWith('http') || imageUrl.startsWith('/')) ? (
+            <ClientImage 
               src={imageUrl}
               alt={title}
-              fill
               className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
           ) : (

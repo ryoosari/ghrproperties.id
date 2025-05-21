@@ -11,6 +11,11 @@ A modern real estate website built with Next.js that can be deployed as a fully 
 - Property listings with search and filtering
 - Detailed property pages with image galleries
 
+## Security Updates
+
+- **May 2025**: Updated to Next.js 14.2.25 to address CVE-2025-29927 (middleware authorization bypass vulnerability)
+- Added mitigation in .htaccess to block the vulnerable header as an extra security layer
+
 ## Deployment Options
 
 This website supports three deployment modes:

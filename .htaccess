@@ -37,6 +37,9 @@ ErrorDocument 403 /index.html
 
 # Allow cross-origin
 <IfModule mod_headers.c>
+    # Mitigation for CVE-2025-29927 (Next.js middleware authorization bypass)
+    RequestHeader unset x-middleware-subrequest
+    
     Header set Access-Control-Allow-Origin "*"
     Header set X-Content-Type-Options "nosniff"
     Header set X-XSS-Protection "1; mode=block"

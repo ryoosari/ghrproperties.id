@@ -844,32 +844,37 @@ function normalizePropertyData(property: any) {
     let featuredImageUrl = '/placeholder-property.jpg';
     let galleryImages: string[] = [];
     
-    // Specific handling for properties with missing images (like Vero Soluna)
-    if (propertySlug === 'vero-soluna-3br-hideaway') {
-      featuredImageUrl = `${localImageBasePath}/large-placeholder.jpg`;
+    // Use MainImage as featured image if available
+    if (attributes.MainImage && attributes.MainImage.url) {
+      const mainImageUrl = attributes.MainImage.url;
+      const mainImageFilename = mainImageUrl.split('/').pop();
       
-      // Create some placeholder gallery images
-      for (let i = 0; i < 4; i++) {
-        galleryImages.push(`${localImageBasePath}/large-placeholder.jpg`);
+      if (mainImageFilename) {
+        featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
       }
-    } else {
-      // Use MainImage as featured image if available
-      if (attributes.MainImage && attributes.MainImage.url) {
-        const imgUrl = attributes.MainImage.url;
-        const imgFilename = imgUrl.split('/').pop();
-        featuredImageUrl = `${localImageBasePath}/large-large_${imgFilename}`;
+    } 
+    // Fall back to first image from Image array
+    else if (attributes.Image && Array.isArray(attributes.Image) && attributes.Image.length > 0) {
+      const firstImage = attributes.Image[0];
+      if (firstImage && firstImage.url) {
+        const firstImageUrl = firstImage.url;
+        const firstImageFilename = firstImageUrl.split('/').pop();
+        
+        if (firstImageFilename) {
+          featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
+        }
       }
-      
-      // Extract gallery images from Image array
-      if (attributes.Image && Array.isArray(attributes.Image)) {
-        galleryImages = attributes.Image
-          .filter((img: any) => img && img.url)
-          .map((img: any) => {
-            const imgUrl = img.url;
-            const imgFilename = imgUrl.split('/').pop();
-            return `${localImageBasePath}/large-large_${imgFilename}`;
-          });
-      }
+    }
+    
+    // Extract gallery images from Image array
+    if (attributes.Image && Array.isArray(attributes.Image)) {
+      galleryImages = attributes.Image
+        .filter(img => img && img.url)
+        .map(img => {
+          const imgUrl = img.url;
+          const imgFilename = imgUrl.split('/').pop();
+          return `${localImageBasePath}/large-large_${imgFilename}`;
+        });
     }
     
     // Extract amenities if they exist - handle component structure
@@ -929,94 +934,97 @@ function normalizePropertyData(property: any) {
     };
   }
   
-  // If it's a standard property object (not from Strapi), normalize it
-  else {
-    // Extract featured image URL - prioritize MainImage if available
-    let featuredImageUrl = '/placeholder-property.jpg';
-    let galleryImages: string[] = [];
+  // If it's a Strapi property (direct properties), normalize it
+  // Extract featured image - prioritize MainImage if available
+  let featuredImageUrl = '/placeholder-property.jpg';
+  let galleryImages: string[] = [];
+  
+  // Use MainImage as featured image if available
+  if (property.MainImage && property.MainImage.url) {
+    const mainImageUrl = property.MainImage.url;
+    const mainImageFilename = mainImageUrl.split('/').pop();
     
-    // Specific handling for properties with missing images (like Vero Soluna)
-    if (propertySlug === 'vero-soluna-3br-hideaway') {
-      featuredImageUrl = `${localImageBasePath}/large-placeholder.jpg`;
+    if (mainImageFilename) {
+      featuredImageUrl = `${localImageBasePath}/large-large_${mainImageFilename}`;
+    }
+  } 
+  // Fall back to first image from Image array
+  else if (property.Image && Array.isArray(property.Image) && property.Image.length > 0) {
+    const firstImage = property.Image[0];
+    if (firstImage && firstImage.url) {
+      const firstImageUrl = firstImage.url;
+      const firstImageFilename = firstImageUrl.split('/').pop();
       
-      // Create some placeholder gallery images
-      for (let i = 0; i < 4; i++) {
-        galleryImages.push(`${localImageBasePath}/large-placeholder.jpg`);
-      }
-    } else {
-      // Use MainImage as featured image if available
-      if (property.MainImage && property.MainImage.url) {
-        const imgUrl = property.MainImage.url;
-        const imgFilename = imgUrl.split('/').pop();
-        featuredImageUrl = `${localImageBasePath}/large-large_${imgFilename}`;
-      }
-      
-      // Extract gallery images from Image array
-      if (property.Image && Array.isArray(property.Image)) {
-        galleryImages = property.Image
-          .filter((img: any) => img && img.url)
-          .map((img: any) => {
-            const imgUrl = img.url;
-            const imgFilename = imgUrl.split('/').pop();
-            return `${localImageBasePath}/large-large_${imgFilename}`;
-          });
+      if (firstImageFilename) {
+        featuredImageUrl = `${localImageBasePath}/large-large_${firstImageFilename}`;
       }
     }
-    
-    // Extract amenities from Strapi format - handle component structure
-    let amenities = [];
-    
-    // Handle component-based amenities (new format)
-    if (property.Amenities && Array.isArray(property.Amenities)) {
-      
-      // Keep the original array to preserve the object structure
-      amenities = property.Amenities;
-
-    } 
-    // Handle old format (direct string array)
-    else if (property.amenities && Array.isArray(property.amenities)) {
-      amenities = property.amenities;
-    }
-    
-    // Extract location details
-    let address = '';
-    let latitude = null;
-    let longitude = null;
-    
-    if (property.propertyLocation) {
-      const location = property.propertyLocation;
-      
-      // Use the single address field
-      address = location.address || '';
-      
-      // Extract coordinates
-      if (location.latitude && location.longitude) {
-        latitude = parseFloat(location.latitude);
-        longitude = parseFloat(location.longitude);
-      }
-    }
-
-    return {
-      id: property.id,
-      title: property.Title || 'Unnamed Property',
-      description: property.Description || '',
-      location: property.Location || 'Location not specified',
-      price: property.Price || 0,
-      bedrooms: property.Bedrooms || 0,
-      bathrooms: property.Bathrooms || 0,
-      area: property.Area || property.square_footage || 'N/A',
-      property_type: property.PropertyType || 'Property',
-      status: property.Status || 'unlisted',
-      kitchen: property.Kitchen || 1,
-      living_room: property.LivingRoom || 1,
-      featured_image: featuredImageUrl,
-      gallery_images: galleryImages,
-      amenities: amenities,
-      slug: property.Slug || property.slug,
-      // Add location details
-      address: address,
-      latitude: latitude,
-      longitude: longitude
-    };
   }
+  
+  // Extract gallery images from Image array
+  if (property.Image && Array.isArray(property.Image)) {
+    galleryImages = property.Image
+      .filter(img => img && img.url)
+      .map(img => {
+        const imgUrl = img.url;
+        const imgFilename = imgUrl.split('/').pop();
+        return `${localImageBasePath}/large-large_${imgFilename}`;
+      });
+  }
+  
+  // Extract amenities from Strapi format - handle component structure
+  let amenities = [];
+  
+  // Handle component-based amenities (new format)
+  if (property.Amenities && Array.isArray(property.Amenities)) {
+    
+    // Keep the original array to preserve the object structure
+    amenities = property.Amenities;
+
+  } 
+  // Handle old format (direct string array)
+  else if (property.amenities && Array.isArray(property.amenities)) {
+    amenities = property.amenities;
+  }
+  
+  // Extract location details
+  let address = '';
+  let latitude = null;
+  let longitude = null;
+  
+  if (property.propertyLocation) {
+    const location = property.propertyLocation;
+    
+    // Use the single address field
+    address = location.address || '';
+    
+    // Extract coordinates
+    if (location.latitude && location.longitude) {
+      latitude = parseFloat(location.latitude);
+      longitude = parseFloat(location.longitude);
+    }
+  }
+
+  return {
+    id: property.id,
+    title: property.Title || 'Unnamed Property',
+    description: property.Description || '',
+    location: property.Location || 'Location not specified',
+    price: property.Price || 0,
+    bedrooms: property.Bedrooms || 0,
+    bathrooms: property.Bathrooms || 0,
+    area: property.Area || property.square_footage || 'N/A',
+    property_type: property.PropertyType || 'Property',
+    status: property.Status || 'unlisted',
+    kitchen: property.Kitchen || 1,
+    living_room: property.LivingRoom || 1,
+    featured_image: featuredImageUrl,
+    gallery_images: galleryImages,
+    amenities: amenities,
+    slug: property.Slug || property.slug,
+    // Add location details
+    address: address,
+    latitude: latitude,
+    longitude: longitude
+  };
 } 

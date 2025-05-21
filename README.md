@@ -19,7 +19,15 @@ This website supports three deployment modes:
 2. **Hybrid Mode** - Pre-rendered pages with revalidation for updates when Strapi content changes
 3. **Full Dynamic** - All content fetched at request time (requires a Node.js server)
 
-For detailed instructions on each deployment option, see [STATIC-DEPLOYMENT.md](./STATIC-DEPLOYMENT.md).
+For detailed instructions on each deployment option, see [STATIC-DEPLOYMENT.md](./docs/STATIC-DEPLOYMENT.md).
+
+## Documentation
+
+All project documentation can be found in the `docs/` directory, including:
+- Deployment guides
+- Strapi integration instructions
+- Database setup
+- Maps integration
 
 ## Quick Start
 
@@ -57,6 +65,7 @@ For static exports, content is pulled from Strapi at build time and embedded in 
 - `public` - Static assets
 - `data` - Directory for exported data from Strapi
 - `scripts` - Utility scripts for export and deployment
+- `docs` - Project documentation
 
 ## Available Scripts
 
